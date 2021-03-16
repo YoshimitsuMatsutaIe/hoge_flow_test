@@ -34,18 +34,28 @@ L6 = 368.3e-3
 ## クラス
 BaxterKinema = Kinematics(L, h, H, L0, L1, L2, L3, L4, L5, L6)
 
+q1_min, q1_max = -141, 51
+q2_min, q2_max = -123, 60
+q3_min, q3_max = -173, 173
+q4_min, q4_max = -3, 150
+q5_min, q5_max = -175, 175
+q6_min, q6_max = -90, 120
+q7_min, q7_max = -175, 175
+q_min = np.array([[q1_min, q2_min, q3_min, q4_min, q5_min, q6_min, q7_min]]).T * pi / 180
+q_max = np.array([[q1_max, q2_max, q3_max, q4_max, q5_max, q6_max, q7_max]]).T * pi / 180
+
 
 ### 初期値 ###
 # baxterの初期姿勢（規定）
-theta1_init = 0 * pi / 180
-theta2_init = -31 * pi / 180
-theta3_init = 0 * pi / 180
-theta4_init = 43 * pi / 180
-theta5_init = 0 * pi / 180
-theta6_init = 72 * pi / 180
-theta7_init = 0 * pi / 180
+q1_init = 0 * pi / 180
+q2_init = -31 * pi / 180
+q3_init = 0 * pi / 180
+q4_init = 43 * pi / 180
+q5_init = 0 * pi / 180
+q6_init = 72 * pi / 180
+q7_init = 0 * pi / 180
 
-q = np.array([[theta1_init, theta2_init, theta3_init, theta4_init, theta5_init, theta6_init, theta7_init]]).T  # ジョイント角度ベクトル
+q = np.array([[q1_init, q2_init, q3_init, q4_init, q5_init, q6_init, q7_init]]).T  # ジョイント角度ベクトル
 dq = np.array([[0, 0, 0, 0, 0, 0, 0]]).T  # ジョイント角速度ベクトル
 origins = BaxterKinema.origins(q)  # 局所座標系の原点を計算
 dorigins = []
@@ -97,8 +107,10 @@ goal_posi = np.array([[0.2, -0.6, 1]])
 
 # 障害物位置
 #obs_posi = np.array([[0.4, -0.6, 1]])
-obs_posi = np.array([[0.6, -0.6, 1]])
-
+obs_posi = np.array([[0.6, -0.6, 1],
+                     [0.6, -0.6, 1.05],
+                     [0.6, -0.6, 0.95]])
+oend = obs_posi.shape[0]
 
 time_sim_start = time.time()
 
@@ -109,41 +121,55 @@ RMP = RMP1(attract_max_speed = 1,
            attract_sigma_W = 1, 
            attract_sigma_H = 1, 
            attract_A_damp_r = 0.3, 
-           obs_scale_rep = 1,
+           obs_scale_rep = 0.2,
            obs_scale_damp = 1,
            obs_ratio = 0.5,
-           obs_rep_gain = 1,
-           obs_r = 15)
+           obs_rep_gain = 0.5,
+           obs_r = 15,
+           jl_gamma_p = 0.05,
+           jl_gamma_d = 0.1,
+           jl_lambda = 0.7)
+
+
+result = []
 
 ### シミュレーション本体 ###
 for t in np.arange(time_interval, time_span + time_interval, time_interval):
     
-    if np.linalg.norm(goal_posi.T - origins[10]) < 5e-3:  #手先誤差1mm以下になったら成功
+    if np.linalg.norm(goal_posi.T - origins[10]) < 5e-3:  #手先誤差5mm以下になったら成功
         print("目標到達！")
-        rezult = "succes!"
+        result.append("succes!")
         break
+    
+    if (q < q_min).any() or (q_max < q).any():  # ジョイント制限判定
+        print("ジョイント制限を突破")
+        result.append("exceed angle limit")
+        break
+    
     else:
         pull_f_all = []
         pull_M_all = []
         
-        for i in range(5, 11, 1):
+        for i in range(10, 11, 1):
             ## RMP計算
-            # # 障害物会費あり
-            # a = RMP.a_obs(origins[i], dorigins[i], obs_posi.T)
-            # M = RMP.A_obs(origins[i], dorigins[i], obs_posi.T, a)
-            # f = M @ a
+            for j in range(0, oend, 1):
+                # 障害物回避あり
+                a = RMP.a_obs(origins[i], dorigins[i], obs_posi[j:j+1, :].T)
+                M = RMP.A_obs(origins[i], dorigins[i], obs_posi[j:j+1].T, a)
+                f = M @ a
+                
+                # # 障害物回避なし
+                # f = np.zeros((3, 1))
+                # M = np.zeros((3, 3))
+                
+                ## pull演算
+                J = J_all[i]
+                dJ = dJ_all[i]
+                pull_f = J.T @ (f - M @ dJ @ dq)
+                pull_M = J.T @ M @ J
+                pull_f_all.append(pull_f)
+                pull_M_all.append(pull_M)
             
-            # 障害物回避なし
-            f = np.zeros((3, 1))
-            M = np.zeros((3, 3))
-            
-            ## pull演算
-            J = J_all[i]
-            dJ = dJ_all[i]
-            pull_f = J.T @ (f - M @ dJ @ dq)
-            pull_M = J.T @ M @ J
-            pull_f_all.append(pull_f)
-            pull_M_all.append(pull_M)
             if i == 10:
                 a_GL = RMP.a_attract(origins[10], dorigins[10], goal_posi.T)
                 M_GL = RMP.A_attract(origins[10], dorigins[10], goal_posi.T, a_GL)
@@ -155,6 +181,11 @@ for t in np.arange(time_interval, time_span + time_interval, time_interval):
         
         pull_f_all = np.sum(pull_f_all, axis = 0)
         pull_M_all = np.sum(pull_M_all, axis = 0)
+        
+        # ジョイント制限処理RMPを配置空間で追加
+        a_jl = RMP.a_joint_limit(q, dq, q_min, q_max)
+        M_jl = RMP.A_joint_limit(q)
+        f_jl = M_jl @ a_jl
         
         ## resolve演算
         a = np.linalg.pinv(pull_M_all) @ pull_f_all  # 制御指令
@@ -191,14 +222,14 @@ for t in np.arange(time_interval, time_span + time_interval, time_interval):
         origins_his.append(origins_temp)
         
         # ターミナルに計算値を表示（やると遅い）
-        # print("t = ", t)
+        print("t = ", t)
         # print("ee = ", origins[10].T)
-        # print("error = ", np.linalg.norm(goal_posi.T - origins[10], ord=2))
+        print("error = ", np.linalg.norm(goal_posi.T - origins[10], ord=2))
 
 tend = t
-if round(tend, -1) == time_span:
+if len(result) == 0:
     print("時間切れ")
-    rezult = "timeout"
+    result.append("timeout")
 
 print("シミュレーション終了")
 print("シミュレーション時間", time.time() - time_sim_start)
@@ -265,7 +296,7 @@ ax.set_zlim(mid_z - max_range, mid_z + max_range)
 # 目標点
 ax.scatter(goal_posi[0, 0], goal_posi[0, 1], goal_posi[0, 2],
            s = 100, label = 'goal point', marker = '*', color = '#ff7f00', alpha = 1, linewidths = 1.5, edgecolors = 'red')
-ax.scatter(obs_posi[0, 0], obs_posi[0, 1], obs_posi[0, 2],
+ax.scatter(obs_posi[:, 0], obs_posi[:, 1], obs_posi[:, 2],
            s = 100, label = 'obstacle point', marker = '+', color = 'k', alpha = 1)
 
 
@@ -301,7 +332,7 @@ timeani = [ax.text(0.8, 0.2, 0.01, "time = 0.0 [s]", size = 10)]
 time_template = 'time = %s [s]'
 
 # 結果表示
-ax.text(0.8, 0.3, 0.01, rezult, color = "r", size = 14)
+ax.text(0.8, 0.3, 0.01, result[0], color = "r", size = 14)
 
 ax.set_box_aspect((1,1,1))
 

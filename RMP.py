@@ -35,12 +35,6 @@ def D_sigma(q, q_min, q_max):
     #print(np.diag(diags.ravel()))
     return np.diag(diags.ravel())
 
-# def D_sigma(q, q_min, q_max):
-#     """ジョイント制限に関する対角ヤコビ行列"""
-#     diags = (q_max - q_min) * (-np.exp(-q) / (1 + np.exp(q)) ** 2)
-#     return np.diag(diags.ravel())
-
-
 
 class RMP1:
     """論文[R1]のRMP
@@ -133,7 +127,7 @@ class RMP1:
         weight_obs = (dis / r) ** 2 - 2 * dis / r + 1  #3次スプライン?
         #return weight_obs * basic_metric_H(f_obs, 1, 0.8)  # これかも？
         return weight_obs * np.eye(3, dtype = np.float32)  # 誤植？
-        #return weight_obs * f_obs @ f_obs.T
+        #return weight_obs * f_obs @ f_obs.T * 0.0001
     
     
     # ジョイント制限RMP
@@ -151,33 +145,4 @@ class RMP1:
         dof = len(q)
         return self.jl_lambda * np.eye(dof)
 
-
-
-
-
-
-
-# class RMPflow_test01:
-#     """R4のRMPflowの作用素群"""
-#     def __init__(self):
-        
-    
-#     def push(self, x, dx, ):
-#         """push作用素"""
-        
-#         y = psi_
-#         dy = jacobi_psi @ dx
-        
-#         return y, dy
-    
-    
-#     def pull():
-#         """pull作用素"""
-#         return
-    
-    
-#     def resolve():
-#         """resolve作用素"""
-#         return
-    
 

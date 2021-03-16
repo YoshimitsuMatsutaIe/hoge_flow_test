@@ -120,19 +120,19 @@ RMP = RMP1(attract_max_speed = 10,
            jl_lambda = 0.1)
 
 
-rezult = []
+result = []
 
 ### シミュレーション本体 ###
 for t in np.arange(time_interval, time_span + time_interval, time_interval):
     
     if np.linalg.norm(goal_posi.T - origins[7]) < 5e-3:  #手先誤差5mm以下になったら成功
         print("目標到達！")
-        rezult.append("succes!")
+        result.append("succes!")
         break
     
     if (q < q_min).any() or (q_max < q).any():  # ジョイント制限判定
         print("ジョイント制限を突破")
-        rezult.append("exceed angle limit")
+        result.append("exceed angle limit")
         break
     
     else:
@@ -221,9 +221,9 @@ for t in np.arange(time_interval, time_span + time_interval, time_interval):
         # print("error = ", np.linalg.norm(goal_posi.T - origins[7], ord=2))
 
 tend = t
-if len(rezult) == 0:
+if len(result) == 0:
     print("時間切れ")
-    rezult.append("timeout")
+    result.append("timeout")
 
 print("シミュレーション終了")
 print("シミュレーション時間", time.time() - time_sim_start)
@@ -327,7 +327,7 @@ timeani = [ax.text(0.0, 0.2, 0.01, "time = 0.0 [s]", size = 10)]
 time_template = 'time = %s [s]'
 
 # 結果表示
-ax.text(0.0, 0.25, 0.01, rezult[0], color = "r", size = 14)
+ax.text(0.0, 0.25, 0.01, result[0], color = "r", size = 14)
 
 ax.set_box_aspect((1,1,1))
 
