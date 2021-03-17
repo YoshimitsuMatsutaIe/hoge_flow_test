@@ -41,11 +41,11 @@ class RMP1:
     論文そのまま
     """
     def __init__(self, **kwargs):
-        # アトラクト加速度
+        # アトラクター加速度
         self.attract_max_speed = kwargs.pop('attract_max_speed')
         self.attract_gain = kwargs.pop('attract_gain')
         self.attrat_a_damp_r = kwargs.pop('attract_a_damp_r')
-        # アトラクト計量
+        # アトラクター計量
         self.attract_sigma_W = kwargs.pop('attract_sigma_W')
         self.attract_sigma_H = kwargs.pop('attract_sigma_H')
         self.attract_A_damp_r = kwargs.pop('attract_A_damp_r')
@@ -65,7 +65,7 @@ class RMP1:
         self.jl_lambda = kwargs.pop('jl_lambda')
     
     
-    ## アトラクトRMP
+    ## アトラクターRMP
     def a_attract(self, z, dz, z0):
         """アトラクタ加速度"""
         
@@ -146,3 +146,47 @@ class RMP1:
         return self.jl_lambda * np.eye(dof)
 
 
+class RMP2:
+    """[R2],[R4]のやつ"""
+    
+    def __init__(self, **kwargs):
+        # アトラクター加速度
+        self.attract_max_speed = kwargs.pop('attract_max_speed')
+        self.attract_gain = kwargs.pop('attract_gain')
+        self.attrat_a_damp_r = kwargs.pop('attract_a_damp_r')
+        # アトラクター計量
+        self.attract_sigma_W = kwargs.pop('attract_sigma_W')
+        self.attract_sigma_H = kwargs.pop('attract_sigma_H')
+        self.attract_A_damp_r = kwargs.pop('attract_A_damp_r')
+        
+        # 障害物加速度
+        self.obs_scale_rep = kwargs.pop('obs_scale_rep')
+        self.obs_scale_damp = kwargs.pop('obs_scale_damp')
+        self.obs_ratio = kwargs.pop('obs_ratio')
+        self.obs_rep_gain = kwargs.pop('obs_rep_gain')
+        # 障害物計量
+        self.obs_r = kwargs.pop('obs_r')
+        
+        # ジョイント制限処理加速度
+        self.jl_gamma_p = kwargs.pop('jl_gamma_p')
+        self.jl_gamma_d = kwargs.pop('jl_gamma_d')
+        # ジョイント制限処理計量
+        self.jl_lambda = kwargs.pop('jl_lambda')
+    
+    def f_attract(self, x, dx, xo):
+        """アトラクト力"""
+        # パラメーター
+        gamma_p = self.attract_attract_gain
+        gamma_d = self.attract_damp_gain
+        
+        # 変数変換
+        z = x - x0
+        dz = dx - dxo
+        
+        # メイン
+        f1 = -gamma_p * soft_normal(z, alpha) - gamma_d * dz
+        
+        carv_term = -np.linalg.inv(M) @ xi_M
+        
+        return f1 + carv_term
+    

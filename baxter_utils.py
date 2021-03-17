@@ -6,7 +6,7 @@ import numpy as np
 from math import cos, sin, tan, pi, sqrt
 
 
-class Kinematics:
+class BaxterKinematics:
     """ローカル座標系の原点，ヤコビ行列等を計算"""
     
     def __init__(self, L, h, H, L0, L1, L2, L3, L4, L5, L6):
@@ -67,7 +67,6 @@ class Kinematics:
                         [0.707106781186548*self.L1*sin(q[0, 0]) - 0.707106781186548*self.L1*cos(q[0, 0]) + 0.707106781186548*self.L2*sin(q[0, 0])*cos(q[1, 0]) - 0.707106781186548*self.L2*cos(q[0, 0])*cos(q[1, 0]) - 0.707106781186548*self.L3*(-sin(q[0, 0])*sin(q[2, 0]) - sin(q[1, 0])*cos(q[0, 0])*cos(q[2, 0])) + 0.707106781186548*self.L3*(-sin(q[0, 0])*sin(q[1, 0])*cos(q[2, 0]) + sin(q[2, 0])*cos(q[0, 0])) + 0.707106781186548*self.L4*(-(-sin(q[0, 0])*sin(q[2, 0]) - sin(q[1, 0])*cos(q[0, 0])*cos(q[2, 0]))*sin(q[3, 0]) - cos(q[0, 0])*cos(q[1, 0])*cos(q[3, 0])) - 0.707106781186548*self.L4*(-(-sin(q[0, 0])*sin(q[1, 0])*cos(q[2, 0]) + sin(q[2, 0])*cos(q[0, 0]))*sin(q[3, 0]) - sin(q[0, 0])*cos(q[1, 0])*cos(q[3, 0])) - 0.707106781186548*self.L5*(((-sin(q[0, 0])*sin(q[2, 0]) - sin(q[1, 0])*cos(q[0, 0])*cos(q[2, 0]))*cos(q[3, 0]) - sin(q[3, 0])*cos(q[0, 0])*cos(q[1, 0]))*cos(q[4, 0]) + (-sin(q[0, 0])*cos(q[2, 0]) + sin(q[1, 0])*sin(q[2, 0])*cos(q[0, 0]))*sin(q[4, 0])) + 0.707106781186548*self.L5*(((-sin(q[0, 0])*sin(q[1, 0])*cos(q[2, 0]) + sin(q[2, 0])*cos(q[0, 0]))*cos(q[3, 0]) - sin(q[0, 0])*sin(q[3, 0])*cos(q[1, 0]))*cos(q[4, 0]) + (sin(q[0, 0])*sin(q[1, 0])*sin(q[2, 0]) + cos(q[0, 0])*cos(q[2, 0]))*sin(q[4, 0])) + self.L6*(-0.707106781186548*(((-sin(q[0, 0])*sin(q[2, 0]) - sin(q[1, 0])*cos(q[0, 0])*cos(q[2, 0]))*cos(q[3, 0]) - sin(q[3, 0])*cos(q[0, 0])*cos(q[1, 0]))*cos(q[4, 0]) + (-sin(q[0, 0])*cos(q[2, 0]) + sin(q[1, 0])*sin(q[2, 0])*cos(q[0, 0]))*sin(q[4, 0]))*sin(q[5, 0]) + 0.707106781186548*(((-sin(q[0, 0])*sin(q[1, 0])*cos(q[2, 0]) + sin(q[2, 0])*cos(q[0, 0]))*cos(q[3, 0]) - sin(q[0, 0])*sin(q[3, 0])*cos(q[1, 0]))*cos(q[4, 0]) + (sin(q[0, 0])*sin(q[1, 0])*sin(q[2, 0]) + cos(q[0, 0])*cos(q[2, 0]))*sin(q[4, 0]))*sin(q[5, 0]) - 0.707106781186548*((-sin(q[0, 0])*sin(q[2, 0]) - sin(q[1, 0])*cos(q[0, 0])*cos(q[2, 0]))*sin(q[3, 0]) + cos(q[0, 0])*cos(q[1, 0])*cos(q[3, 0]))*cos(q[5, 0]) + 0.707106781186548*((-sin(q[0, 0])*sin(q[1, 0])*cos(q[2, 0]) + sin(q[2, 0])*cos(q[0, 0]))*sin(q[3, 0]) + sin(q[0, 0])*cos(q[1, 0])*cos(q[3, 0]))*cos(q[5, 0])) - self.h],
                         [self.H + self.L0 - self.L2*sin(q[1, 0]) - self.L3*cos(q[1, 0])*cos(q[2, 0]) - self.L4*(sin(q[1, 0])*cos(q[3, 0]) + sin(q[3, 0])*cos(q[1, 0])*cos(q[2, 0])) + self.L5*((sin(q[1, 0])*sin(q[3, 0]) - cos(q[1, 0])*cos(q[2, 0])*cos(q[3, 0]))*cos(q[4, 0]) + sin(q[2, 0])*sin(q[4, 0])*cos(q[1, 0])) + self.L6*(((sin(q[1, 0])*sin(q[3, 0]) - cos(q[1, 0])*cos(q[2, 0])*cos(q[3, 0]))*cos(q[4, 0]) + sin(q[2, 0])*sin(q[4, 0])*cos(q[1, 0]))*sin(q[5, 0]) + (-sin(q[1, 0])*cos(q[3, 0]) - sin(q[3, 0])*cos(q[1, 0])*cos(q[2, 0]))*cos(q[5, 0]))]])
         
-        #return np.concatenate([o_Wo, o_BL, o_0, o_1, o_2, o_3, o_4, o_5, o_6, o_7, o_GL], axis = 1).T
         return [o_Wo, o_BL, o_0, o_1, o_2, o_3, o_4, o_5, o_6, o_7, o_GL]
     
     # ヤコビ行列
@@ -132,7 +131,7 @@ class Kinematics:
                        -self.L2*cos(q[1, 0]) + self.L3*sin(q[1, 0])*cos(q[2, 0]) - self.L4*(-sin(q[1, 0])*sin(q[3, 0])*cos(q[2, 0]) + cos(q[1, 0])*cos(q[3, 0])) + self.L5*((sin(q[1, 0])*cos(q[2, 0])*cos(q[3, 0]) + sin(q[3, 0])*cos(q[1, 0]))*cos(q[4, 0]) - sin(q[1, 0])*sin(q[2, 0])*sin(q[4, 0])) + self.L6*(((sin(q[1, 0])*cos(q[2, 0])*cos(q[3, 0]) + sin(q[3, 0])*cos(q[1, 0]))*cos(q[4, 0]) - sin(q[1, 0])*sin(q[2, 0])*sin(q[4, 0]))*sin(q[5, 0]) + (sin(q[1, 0])*sin(q[3, 0])*cos(q[2, 0]) - cos(q[1, 0])*cos(q[3, 0]))*cos(q[5, 0])), self.L3*sin(q[2, 0])*cos(q[1, 0]) + self.L4*sin(q[2, 0])*sin(q[3, 0])*cos(q[1, 0]) + self.L5*(sin(q[2, 0])*cos(q[1, 0])*cos(q[3, 0])*cos(q[4, 0]) + sin(q[4, 0])*cos(q[1, 0])*cos(q[2, 0])) + self.L6*((sin(q[2, 0])*cos(q[1, 0])*cos(q[3, 0])*cos(q[4, 0]) + sin(q[4, 0])*cos(q[1, 0])*cos(q[2, 0]))*sin(q[5, 0]) + sin(q[2, 0])*sin(q[3, 0])*cos(q[1, 0])*cos(q[5, 0])), -self.L4*(-sin(q[1, 0])*sin(q[3, 0]) + cos(q[1, 0])*cos(q[2, 0])*cos(q[3, 0])) + self.L5*(sin(q[1, 0])*cos(q[3, 0]) + sin(q[3, 0])*cos(q[1, 0])*cos(q[2, 0]))*cos(q[4, 0]) + self.L6*((sin(q[1, 0])*sin(q[3, 0]) - cos(q[1, 0])*cos(q[2, 0])*cos(q[3, 0]))*cos(q[5, 0]) + (sin(q[1, 0])*cos(q[3, 0]) + sin(q[3, 0])*cos(q[1, 0])*cos(q[2, 0]))*sin(q[5, 0])*cos(q[4, 0])), self.L5*(-(sin(q[1, 0])*sin(q[3, 0]) - cos(q[1, 0])*cos(q[2, 0])*cos(q[3, 0]))*sin(q[4, 0]) + sin(q[2, 0])*cos(q[1, 0])*cos(q[4, 0])) + self.L6*(-(sin(q[1, 0])*sin(q[3, 0]) - cos(q[1, 0])*cos(q[2, 0])*cos(q[3, 0]))*sin(q[4, 0]) + sin(q[2, 0])*cos(q[1, 0])*cos(q[4, 0]))*sin(q[5, 0]), self.L6*(((sin(q[1, 0])*sin(q[3, 0]) - cos(q[1, 0])*cos(q[2, 0])*cos(q[3, 0]))*cos(q[4, 0]) + sin(q[2, 0])*sin(q[4, 0])*cos(q[1, 0]))*cos(q[5, 0]) - (-sin(q[1, 0])*cos(q[3, 0]) - sin(q[3, 0])*cos(q[1, 0])*cos(q[2, 0]))*sin(q[5, 0])), 0]])
         return z
     
-    def jacobi_ALL(self, q):
+    def jacobi_all(self, q):
         """ヤコビ行列を全部計算する
         ・
         """
@@ -147,7 +146,6 @@ class Kinematics:
         j6 = self.jacobi_6(q)
         j7 = self.jacobi_7(q)
         jGL = self.jacobi_GL(q)
-        #return np.concatenate([jWo, j0, j1, j2, j3, j4, j5, j6, j7, jGL], axis = 1)
         return [jWo, jBL, j0, j1, j2, j3, j4, j5, j6, j7, jGL]
     
     # ヤコビ行列の時間微分
@@ -283,7 +281,7 @@ class Kinematics:
                        0]])
         return z
 
-    def djacobi_ALL(self, q, dq):
+    def djacobi_all(self, q, dq):
         """ヤコビ行列の時間微分を全部計算する
         ・
         """
@@ -298,41 +296,5 @@ class Kinematics:
         dj6 = self.djacobi_6(q, dq)
         dj7 = self.djacobi_7(q, dq)
         djGL = self.djacobi_GL(q, dq)
-        #return np.concatenate([djWo, dj0, dj1, dj2, dj3, dj4, dj5, dj6, dj7, djGL], axis = 1)
         return [djWo, djBL, dj0, dj1, dj2, dj3, dj4, dj5, dj6, dj7, djGL]
 
-# # テスト
-
-# import time
-# start = time.time()
-
-# L = 278e-3
-# h = 64e-3
-# H = 1104e-3
-
-# L0 = 270.35e-3
-# L1 = 69e-3
-# L2 = 364.35e-3
-# L3 = 69e-3
-# L4 = 374.29e-3
-# L5 = 10e-3
-# L6 = 368.3e-3
-
-# ## クラス
-# BaxterKinema = Kinematics(L, h, H, L0, L1, L2, L3, L4, L5, L6)
-
-
-# # baxterの初期姿勢（規定）
-# theta1_init = 0 * pi / 180
-# theta2_init = -31 * pi / 180
-# theta3_init = 0 * pi / 180
-# theta4_init = 43 * pi / 180
-# theta5_init = 0 * pi / 180
-# theta6_init = 72 * pi / 180
-# theta7_init = 0 * pi / 180
-
-# q = np.array([[theta1_init, theta2_init, theta3_init, theta4_init, theta5_init, theta6_init, theta7_init]]).T  # ジョイント角度ベクトル
-# dq = np.array([[0, 0, 0, 0, 0, 0, 0]]).T  # ジョイント角速度ベクトル
-# origins = BaxterKinema.jacobi_ALL(q)  # 局所座標系の原点を計算
-# print("計算時間=", time.time() - start)
-# print(origins)

@@ -5,48 +5,57 @@
 import sympy as sy
 import math
 
+
+# q1, q2, q3, q4, q5, q6, q7 = sy.symbols("q1, q2, q3, q4, q5, q6, q7")
+# c0 = sy.cos(sy.pi / 4)
+# s0 = sy.sin(sy.pi / 4)
+# c1 = sy.cos(q1)
+# s1 = sy.sin(q1)
+# c2 = sy.cos(q2)
+# s2 = sy.sin(q2)
+# c3 = sy.cos(q3)
+# s3 = sy.sin(q3)
+# c4 = sy.cos(q4)
+# s4 = sy.sin(q4)
+# c5 = sy.cos(q5)
+# s5 = sy.sin(q5)
+# c6 = sy.cos(q6)
+# s6 = sy.sin(q6)
+# c7 = sy.cos(q7)
+# s7 = sy.sin(q7)
+# # ジョイント角度ベクトル
+# q = sy.Matrix([[q1, q2, q3, q4, q5, q6, q7]]).T
+
+
+
+### qを時間の関数にしたいとき ###
 t = sy.Symbol("t")
-# theta1, theta2, theta3, theta4, theta5, theta6, theta7 = sy.symbols("theta1, theta2, theta3, theta4, theta5, theta6, theta7")
-# c1 = sy.cos(theta1)
-# s1 = sy.sin(theta1)
-# c2 = sy.cos(theta2)
-# s2 = sy.sin(theta2)
-# c3 = sy.cos(theta3)
-# s3 = sy.sin(theta3)
-# c4 = sy.cos(theta4)
-# s4 = sy.sin(theta4)
-# c5 = sy.cos(theta5)
-# s5 = sy.sin(theta5)
-# c6 = sy.cos(theta6)
-# s6 = sy.sin(theta6)
-# c7 = sy.cos(theta7)
-# s7 = sy.sin(theta7)
+c0 = sy.cos(sy.pi / 4)
+s0 = sy.sin(sy.pi / 4)
+q1 = sy.Function("q1")
+q2 = sy.Function("q2")
+q3 = sy.Function("q3")
+q4 = sy.Function("q4")
+q5 = sy.Function("q5")
+q6 = sy.Function("q6")
+q7 = sy.Function("q7")
+c1 = sy.cos(q1(t))
+s1 = sy.sin(q1(t))
+c2 = sy.cos(q2(t))
+s2 = sy.sin(q2(t))
+c3 = sy.cos(q3(t))
+s3 = sy.sin(q3(t))
+c4 = sy.cos(q4(t))
+s4 = sy.sin(q4(t))
+c5 = sy.cos(q5(t))
+s5 = sy.sin(q5(t))
+c6 = sy.cos(q6(t))
+s6 = sy.sin(q6(t))
+c7 = sy.cos(q7(t))
+s7 = sy.sin(q7(t))
 
-
-
-# ### thetaを時間の関数にしたいとき ###
-theta1 = sy.Function("theta1")
-theta2 = sy.Function("theta2")
-theta3 = sy.Function("theta3")
-theta4 = sy.Function("theta4")
-theta5 = sy.Function("theta5")
-theta6 = sy.Function("theta6")
-theta7 = sy.Function("theta7")
-c1 = sy.cos(theta1(t))
-s1 = sy.sin(theta1(t))
-c2 = sy.cos(theta2(t))
-s2 = sy.sin(theta2(t))
-c3 = sy.cos(theta3(t))
-s3 = sy.sin(theta3(t))
-c4 = sy.cos(theta4(t))
-s4 = sy.sin(theta4(t))
-c5 = sy.cos(theta5(t))
-s5 = sy.sin(theta5(t))
-c6 = sy.cos(theta6(t))
-s6 = sy.sin(theta6(t))
-c7 = sy.cos(theta7(t))
-s7 = sy.sin(theta7(t))
-
+# ジョイント角度ベクトル
+q = sy.Matrix([[q1(t), q2(t), q3(t), q4(t), q5(t), q6(t), q7(t)]]).T
 
 L, h, H = sy.symbols("L, h, H")
 L0, L1, L2, L3, L4, L5, L6 = sy.symbols("L0, L1, L2, L3, L4, L5, L6")
@@ -54,8 +63,15 @@ L0, L1, L2, L3, L4, L5, L6 = sy.symbols("L0, L1, L2, L3, L4, L5, L6")
 
 # 同時変換行列
 
-T_Wo_BL = sy.Matrix([[math.sqrt(2) / 2, math.sqrt(2) / 2, 0, L],
-                     [-math.sqrt(2) / 2, math.sqrt(2) / 2, 0, -h],
+# 直書き
+# T_Wo_BL = sy.Matrix([[math.sqrt(2) / 2, math.sqrt(2) / 2, 0, L],
+#                      [-math.sqrt(2) / 2, math.sqrt(2) / 2, 0, -h],
+#                      [0, 0, 1, H],
+#                      [0, 0, 0, 1]])
+
+# 直書きじゃない
+T_Wo_BL = sy.Matrix([[c0, s0, 0, L],
+                     [-s0, c0, 0, -h],
                      [0, 0, 1, H],
                      [0, 0, 0, 1]])
 
@@ -150,33 +166,52 @@ r_Wo_6 = T_Wo_6[0:3, 3:4]
 r_Wo_7 = T_Wo_7[0:3, 3:4]
 r_Wo_GL = T_Wo_GL[0:3, 3:4]
 
+r_Wo_BL = sy.simplify(r_Wo_BL)
+r_Wo_0 = sy.simplify(r_Wo_0)
+r_Wo_1 = sy.simplify(r_Wo_1)
+r_Wo_2 = sy.simplify(r_Wo_2)
+r_Wo_3 = sy.simplify(r_Wo_3)
+r_Wo_4 = sy.simplify(r_Wo_4)
+r_Wo_5 = sy.simplify(r_Wo_5)
+r_Wo_6 = sy.simplify(r_Wo_6)
+r_Wo_7 = sy.simplify(r_Wo_7)
+r_Wo_GL = sy.simplify(r_Wo_GL)
 
-# ジョイント角度ベクトル
-q = sy.Matrix([[theta1(t), theta2(t), theta3(t), theta4(t), theta5(t), theta6(t), theta7(t)]]).T
+# print("BL = ", r_Wo_BL)
+# print("0 = ", r_Wo_0)
+# print("1 = ", r_Wo_1)
+# print("2 = ", r_Wo_2)
+# print("3 = ", r_Wo_3)
+# print("4 = ", r_Wo_4)
+# print("5 = ", r_Wo_5)
+# print("6 = ", r_Wo_6)
+# print("7 = ", r_Wo_7)
+# print("GL = ", r_Wo_GL)
 
 
-jacobi_r_Wo_BL = r_Wo_BL.jacobian(q)
-jacobi_r_Wo_0 = r_Wo_0.jacobian(q)
-jacobi_r_Wo_1 = r_Wo_1.jacobian(q)
-jacobi_r_Wo_2 = r_Wo_2.jacobian(q)
-jacobi_r_Wo_3 = r_Wo_3.jacobian(q)
-jacobi_r_Wo_4 = r_Wo_4.jacobian(q)
-jacobi_r_Wo_5 = r_Wo_5.jacobian(q)
-jacobi_r_Wo_6 = r_Wo_6.jacobian(q)
-jacobi_r_Wo_7 = r_Wo_7.jacobian(q)
-jacobi_r_Wo_GL = r_Wo_GL.jacobian(q)
+jacobi_r_Wo_BL = sy.simplify(r_Wo_BL.jacobian(q))
+jacobi_r_Wo_0 = sy.simplify(r_Wo_0.jacobian(q))
+jacobi_r_Wo_1 = sy.simplify(r_Wo_1.jacobian(q))
+jacobi_r_Wo_2 = sy.simplify(r_Wo_2.jacobian(q))
+jacobi_r_Wo_3 = sy.simplify(r_Wo_3.jacobian(q))
+jacobi_r_Wo_4 = sy.simplify(r_Wo_4.jacobian(q))
+jacobi_r_Wo_5 = sy.simplify(r_Wo_5.jacobian(q))
+jacobi_r_Wo_6 = sy.simplify(r_Wo_6.jacobian(q))
+jacobi_r_Wo_7 = sy.simplify(r_Wo_7.jacobian(q))
+jacobi_r_Wo_GL = sy.simplify(r_Wo_GL.jacobian(q))
 
-
-#print("BL = ", jacobi_r_Wo_BL)
+# print("BL = ", jacobi_r_Wo_BL)
 # print("0 = ", jacobi_r_Wo_0)
 # print("1 = ", jacobi_r_Wo_1)
 # print("2 = ", jacobi_r_Wo_2)
-#print("3 = ", jacobi_r_Wo_3)
-#print("4 = ", jacobi_r_Wo_4)
-#print("5 = ", jacobi_r_Wo_5)
-#print("6 = ", jacobi_r_Wo_6)
-#print("7 = ", jacobi_r_Wo_7)
-# #print("GL = ", jacobi_r_Wo_GL)
+# print("3 = ", jacobi_r_Wo_3)
+# print("4 = ", jacobi_r_Wo_4)
+# print("5 = ", jacobi_r_Wo_5)
+# print("6 = ", jacobi_r_Wo_6)
+# print("7 = ", jacobi_r_Wo_7)
+# print("GL = ", jacobi_r_Wo_GL)
+
+
 
 djacobi_BL = sy.diff(jacobi_r_Wo_BL, t)
 djacobi_0 = sy.diff(jacobi_r_Wo_0, t)
@@ -190,94 +225,183 @@ djacobi_7 = sy.diff(jacobi_r_Wo_7, t)
 djacobi_GL = sy.diff(jacobi_r_Wo_GL, t)
 
 
-dtheta1 = sy.Function("dtheta1")
-dtheta2 = sy.Function("dtheta2")
-dtheta3 = sy.Function("dtheta3")
-dtheta4 = sy.Function("dtheta4")
-dtheta5 = sy.Function("dtheta5")
-dtheta6 = sy.Function("dtheta6")
-dtheta7 = sy.Function("dtheta7")
+# # dqを時間の変数にしたいとき
+# dq1 = sy.Function("dq1")
+# dq2 = sy.Function("dq2")
+# dq3 = sy.Function("dq3")
+# dq4 = sy.Function("dq4")
+# dq5 = sy.Function("dq5")
+# dq6 = sy.Function("dq6")
+# dq7 = sy.Function("dq7")
+
+# djacobi_BL = djacobi_BL.subs([(sy.Derivative(q1(t), t), dq1(t)),
+#                                 (sy.Derivative(q2(t), t), dq2(t)),
+#                                 (sy.Derivative(q3(t), t), dq3(t)),
+#                                 (sy.Derivative(q4(t), t), dq4(t)),
+#                                 (sy.Derivative(q5(t), t), dq5(t)),
+#                                 (sy.Derivative(q6(t), t), dq6(t)),
+#                                 (sy.Derivative(q7(t), t), dq7(t)),])
+# djacobi_0 = djacobi_0.subs([(sy.Derivative(q1(t), t), dq1(t)),
+#                             (sy.Derivative(q2(t), t), dq2(t)),
+#                             (sy.Derivative(q3(t), t), dq3(t)),
+#                             (sy.Derivative(q4(t), t), dq4(t)),
+#                             (sy.Derivative(q5(t), t), dq5(t)),
+#                             (sy.Derivative(q6(t), t), dq6(t)),
+#                             (sy.Derivative(q7(t), t), dq7(t)),])
+# djacobi_1 = djacobi_1.subs([(sy.Derivative(q1(t), t), dq1(t)),
+#                             (sy.Derivative(q2(t), t), dq2(t)),
+#                             (sy.Derivative(q3(t), t), dq3(t)),
+#                             (sy.Derivative(q4(t), t), dq4(t)),
+#                             (sy.Derivative(q5(t), t), dq5(t)),
+#                             (sy.Derivative(q6(t), t), dq6(t)),
+#                             (sy.Derivative(q7(t), t), dq7(t)),])
+# djacobi_2 = djacobi_2.subs([(sy.Derivative(q1(t), t), dq1(t)),
+#                             (sy.Derivative(q2(t), t), dq2(t)),
+#                             (sy.Derivative(q3(t), t), dq3(t)),
+#                             (sy.Derivative(q4(t), t), dq4(t)),
+#                             (sy.Derivative(q5(t), t), dq5(t)),
+#                             (sy.Derivative(q6(t), t), dq6(t)),
+#                             (sy.Derivative(q7(t), t), dq7(t)),])
+# djacobi_3 = djacobi_3.subs([(sy.Derivative(q1(t), t), dq1(t)),
+#                             (sy.Derivative(q2(t), t), dq2(t)),
+#                             (sy.Derivative(q3(t), t), dq3(t)),
+#                             (sy.Derivative(q4(t), t), dq4(t)),
+#                             (sy.Derivative(q5(t), t), dq5(t)),
+#                             (sy.Derivative(q6(t), t), dq6(t)),
+#                             (sy.Derivative(q7(t), t), dq7(t)),])
+# djacobi_4 = djacobi_4.subs([(sy.Derivative(q1(t), t), dq1(t)),
+#                             (sy.Derivative(q2(t), t), dq2(t)),
+#                             (sy.Derivative(q3(t), t), dq3(t)),
+#                             (sy.Derivative(q4(t), t), dq4(t)),
+#                             (sy.Derivative(q5(t), t), dq5(t)),
+#                             (sy.Derivative(q6(t), t), dq6(t)),
+#                             (sy.Derivative(q7(t), t), dq7(t)),])
+# djacobi_5 = djacobi_5.subs([(sy.Derivative(q1(t), t), dq1(t)),
+#                             (sy.Derivative(q2(t), t), dq2(t)),
+#                             (sy.Derivative(q3(t), t), dq3(t)),
+#                             (sy.Derivative(q4(t), t), dq4(t)),
+#                             (sy.Derivative(q5(t), t), dq5(t)),
+#                             (sy.Derivative(q6(t), t), dq6(t)),
+#                             (sy.Derivative(q7(t), t), dq7(t)),])
+# djacobi_6 = djacobi_6.subs([(sy.Derivative(q1(t), t), dq1(t)),
+#                             (sy.Derivative(q2(t), t), dq2(t)),
+#                             (sy.Derivative(q3(t), t), dq3(t)),
+#                             (sy.Derivative(q4(t), t), dq4(t)),
+#                             (sy.Derivative(q5(t), t), dq5(t)),
+#                             (sy.Derivative(q6(t), t), dq6(t)),
+#                             (sy.Derivative(q7(t), t), dq7(t)),])
+# djacobi_7 = djacobi_7.subs([(sy.Derivative(q1(t), t), dq1(t)),
+#                             (sy.Derivative(q2(t), t), dq2(t)),
+#                             (sy.Derivative(q3(t), t), dq3(t)),
+#                             (sy.Derivative(q4(t), t), dq4(t)),
+#                             (sy.Derivative(q5(t), t), dq5(t)),
+#                             (sy.Derivative(q6(t), t), dq6(t)),
+#                             (sy.Derivative(q7(t), t), dq7(t)),])
+# djacobi_GL = djacobi_GL.subs([(sy.Derivative(q1(t), t), dq1(t)),
+#                                 (sy.Derivative(q2(t), t), dq2(t)),
+#                                 (sy.Derivative(q3(t), t), dq3(t)),
+#                                 (sy.Derivative(q4(t), t), dq4(t)),
+#                                 (sy.Derivative(q5(t), t), dq5(t)),
+#                                 (sy.Derivative(q6(t), t), dq6(t)),
+#                                 (sy.Derivative(q7(t), t), dq7(t)),])
 
 
-djacobi_BL = djacobi_BL.subs([(sy.Derivative(theta1(t), t), dtheta1(t)),
-                                (sy.Derivative(theta2(t), t), dtheta2(t)),
-                                (sy.Derivative(theta3(t), t), dtheta3(t)),
-                                (sy.Derivative(theta4(t), t), dtheta4(t)),
-                                (sy.Derivative(theta5(t), t), dtheta5(t)),
-                                (sy.Derivative(theta6(t), t), dtheta6(t)),
-                                (sy.Derivative(theta7(t), t), dtheta7(t)),])
-djacobi_0 = djacobi_0.subs([(sy.Derivative(theta1(t), t), dtheta1(t)),
-                            (sy.Derivative(theta2(t), t), dtheta2(t)),
-                            (sy.Derivative(theta3(t), t), dtheta3(t)),
-                            (sy.Derivative(theta4(t), t), dtheta4(t)),
-                            (sy.Derivative(theta5(t), t), dtheta5(t)),
-                            (sy.Derivative(theta6(t), t), dtheta6(t)),
-                            (sy.Derivative(theta7(t), t), dtheta7(t)),])
-djacobi_1 = djacobi_1.subs([(sy.Derivative(theta1(t), t), dtheta1(t)),
-                            (sy.Derivative(theta2(t), t), dtheta2(t)),
-                            (sy.Derivative(theta3(t), t), dtheta3(t)),
-                            (sy.Derivative(theta4(t), t), dtheta4(t)),
-                            (sy.Derivative(theta5(t), t), dtheta5(t)),
-                            (sy.Derivative(theta6(t), t), dtheta6(t)),
-                            (sy.Derivative(theta7(t), t), dtheta7(t)),])
-djacobi_2 = djacobi_2.subs([(sy.Derivative(theta1(t), t), dtheta1(t)),
-                            (sy.Derivative(theta2(t), t), dtheta2(t)),
-                            (sy.Derivative(theta3(t), t), dtheta3(t)),
-                            (sy.Derivative(theta4(t), t), dtheta4(t)),
-                            (sy.Derivative(theta5(t), t), dtheta5(t)),
-                            (sy.Derivative(theta6(t), t), dtheta6(t)),
-                            (sy.Derivative(theta7(t), t), dtheta7(t)),])
-djacobi_3 = djacobi_3.subs([(sy.Derivative(theta1(t), t), dtheta1(t)),
-                            (sy.Derivative(theta2(t), t), dtheta2(t)),
-                            (sy.Derivative(theta3(t), t), dtheta3(t)),
-                            (sy.Derivative(theta4(t), t), dtheta4(t)),
-                            (sy.Derivative(theta5(t), t), dtheta5(t)),
-                            (sy.Derivative(theta6(t), t), dtheta6(t)),
-                            (sy.Derivative(theta7(t), t), dtheta7(t)),])
-djacobi_4 = djacobi_4.subs([(sy.Derivative(theta1(t), t), dtheta1(t)),
-                            (sy.Derivative(theta2(t), t), dtheta2(t)),
-                            (sy.Derivative(theta3(t), t), dtheta3(t)),
-                            (sy.Derivative(theta4(t), t), dtheta4(t)),
-                            (sy.Derivative(theta5(t), t), dtheta5(t)),
-                            (sy.Derivative(theta6(t), t), dtheta6(t)),
-                            (sy.Derivative(theta7(t), t), dtheta7(t)),])
-djacobi_5 = djacobi_5.subs([(sy.Derivative(theta1(t), t), dtheta1(t)),
-                            (sy.Derivative(theta2(t), t), dtheta2(t)),
-                            (sy.Derivative(theta3(t), t), dtheta3(t)),
-                            (sy.Derivative(theta4(t), t), dtheta4(t)),
-                            (sy.Derivative(theta5(t), t), dtheta5(t)),
-                            (sy.Derivative(theta6(t), t), dtheta6(t)),
-                            (sy.Derivative(theta7(t), t), dtheta7(t)),])
-djacobi_6 = djacobi_6.subs([(sy.Derivative(theta1(t), t), dtheta1(t)),
-                            (sy.Derivative(theta2(t), t), dtheta2(t)),
-                            (sy.Derivative(theta3(t), t), dtheta3(t)),
-                            (sy.Derivative(theta4(t), t), dtheta4(t)),
-                            (sy.Derivative(theta5(t), t), dtheta5(t)),
-                            (sy.Derivative(theta6(t), t), dtheta6(t)),
-                            (sy.Derivative(theta7(t), t), dtheta7(t)),])
-djacobi_7 = djacobi_7.subs([(sy.Derivative(theta1(t), t), dtheta1(t)),
-                            (sy.Derivative(theta2(t), t), dtheta2(t)),
-                            (sy.Derivative(theta3(t), t), dtheta3(t)),
-                            (sy.Derivative(theta4(t), t), dtheta4(t)),
-                            (sy.Derivative(theta5(t), t), dtheta5(t)),
-                            (sy.Derivative(theta6(t), t), dtheta6(t)),
-                            (sy.Derivative(theta7(t), t), dtheta7(t)),])
-djacobi_GL = djacobi_GL.subs([(sy.Derivative(theta1(t), t), dtheta1(t)),
-                                (sy.Derivative(theta2(t), t), dtheta2(t)),
-                                (sy.Derivative(theta3(t), t), dtheta3(t)),
-                                (sy.Derivative(theta4(t), t), dtheta4(t)),
-                                (sy.Derivative(theta5(t), t), dtheta5(t)),
-                                (sy.Derivative(theta6(t), t), dtheta6(t)),
-                                (sy.Derivative(theta7(t), t), dtheta7(t)),])
+# dqを時間に依らないとしたいとき
+dq1 ,dq2, dq3, dq4, dq5, dq6, dq7 = sy.symbols('dq1 ,dq2, dq3, dq4, dq5, dq6, dq7')
 
-#print("BL = ", djacobi_BL)
-# print("0 = ", djacobi_0)
-# print("1 = ", djacobi_1)
-#print("2 = ", djacobi_2)
-#print("3 = ", djacobi_3)
-#print("4 = ", djacobi_4)
-#print("5 = ", sy.simplify(djacobi_5))
-#print("6 = ", sy.simplify(djacobi_6))
-#print("7 = ", sy.simplify(djacobi_7))
-print("GL = ", sy.simplify(djacobi_GL))
+djacobi_BL = djacobi_BL.subs([(sy.Derivative(q1(t), t), dq1),
+                                (sy.Derivative(q2(t), t), dq2),
+                                (sy.Derivative(q3(t), t), dq3),
+                                (sy.Derivative(q4(t), t), dq4),
+                                (sy.Derivative(q5(t), t), dq5),
+                                (sy.Derivative(q6(t), t), dq6),
+                                (sy.Derivative(q7(t), t), dq7)])
+djacobi_0 = djacobi_0.subs([(sy.Derivative(q1(t), t), dq1),
+                            (sy.Derivative(q2(t), t), dq2),
+                            (sy.Derivative(q3(t), t), dq3),
+                            (sy.Derivative(q4(t), t), dq4),
+                            (sy.Derivative(q5(t), t), dq5),
+                            (sy.Derivative(q6(t), t), dq6),
+                            (sy.Derivative(q7(t), t), dq7),])
+djacobi_1 = djacobi_1.subs([(sy.Derivative(q1(t), t), dq1),
+                            (sy.Derivative(q2(t), t), dq2),
+                            (sy.Derivative(q3(t), t), dq3),
+                            (sy.Derivative(q4(t), t), dq4),
+                            (sy.Derivative(q5(t), t), dq5),
+                            (sy.Derivative(q6(t), t), dq6),
+                            (sy.Derivative(q7(t), t), dq7),])
+djacobi_2 = djacobi_2.subs([(sy.Derivative(q1(t), t), dq1),
+                            (sy.Derivative(q2(t), t), dq2),
+                            (sy.Derivative(q3(t), t), dq3),
+                            (sy.Derivative(q4(t), t), dq4),
+                            (sy.Derivative(q5(t), t), dq5),
+                            (sy.Derivative(q6(t), t), dq6),
+                            (sy.Derivative(q7(t), t), dq7),])
+djacobi_3 = djacobi_3.subs([(sy.Derivative(q1(t), t), dq1),
+                            (sy.Derivative(q2(t), t), dq2),
+                            (sy.Derivative(q3(t), t), dq3),
+                            (sy.Derivative(q4(t), t), dq4),
+                            (sy.Derivative(q5(t), t), dq5),
+                            (sy.Derivative(q6(t), t), dq6),
+                            (sy.Derivative(q7(t), t), dq7),])
+djacobi_4 = djacobi_4.subs([(sy.Derivative(q1(t), t), dq1),
+                            (sy.Derivative(q2(t), t), dq2),
+                            (sy.Derivative(q3(t), t), dq3),
+                            (sy.Derivative(q4(t), t), dq4),
+                            (sy.Derivative(q5(t), t), dq5),
+                            (sy.Derivative(q6(t), t), dq6),
+                            (sy.Derivative(q7(t), t), dq7),])
+djacobi_5 = djacobi_5.subs([(sy.Derivative(q1(t), t), dq1),
+                            (sy.Derivative(q2(t), t), dq2),
+                            (sy.Derivative(q3(t), t), dq3),
+                            (sy.Derivative(q4(t), t), dq4),
+                            (sy.Derivative(q5(t), t), dq5),
+                            (sy.Derivative(q6(t), t), dq6),
+                            (sy.Derivative(q7(t), t), dq7),])
+djacobi_6 = djacobi_6.subs([(sy.Derivative(q1(t), t), dq1),
+                            (sy.Derivative(q2(t), t), dq2),
+                            (sy.Derivative(q3(t), t), dq3),
+                            (sy.Derivative(q4(t), t), dq4),
+                            (sy.Derivative(q5(t), t), dq5),
+                            (sy.Derivative(q6(t), t), dq6),
+                            (sy.Derivative(q7(t), t), dq7),])
+djacobi_7 = djacobi_7.subs([(sy.Derivative(q1(t), t), dq1),
+                            (sy.Derivative(q2(t), t), dq2),
+                            (sy.Derivative(q3(t), t), dq3),
+                            (sy.Derivative(q4(t), t), dq4),
+                            (sy.Derivative(q5(t), t), dq5),
+                            (sy.Derivative(q6(t), t), dq6),
+                            (sy.Derivative(q7(t), t), dq7),])
+djacobi_GL = djacobi_GL.subs([(sy.Derivative(q1(t), t), dq1),
+                            (sy.Derivative(q2(t), t), dq2),
+                            (sy.Derivative(q3(t), t), dq3),
+                            (sy.Derivative(q4(t), t), dq4),
+                            (sy.Derivative(q5(t), t), dq5),
+                            (sy.Derivative(q6(t), t), dq6),
+                            (sy.Derivative(q7(t), t), dq7),])
+
+
+
+djacob_BL = sy.simplify(djacobi_BL)
+djacob_0 = sy.simplify(djacobi_0)
+djacob_1 = sy.simplify(djacobi_1)
+djacob_2 = sy.simplify(djacobi_2)
+djacob_3 = sy.simplify(djacobi_3)
+djacob_4 = sy.simplify(djacobi_4)
+djacob_5 = sy.simplify(djacobi_5)
+djacob_6 = sy.simplify(djacobi_6)
+djacob_7 = sy.simplify(djacobi_7)
+djacob_GL = sy.simplify(djacobi_GL)
+
+
+print("BL = ", djacobi_BL)
+print("0 = ", djacobi_0)
+print("1 = ", djacobi_1)
+print("2 = ", djacobi_2)
+print("3 = ", djacobi_3)
+print("4 = ", djacobi_4)
+print("5 = ", djacobi_5)
+print("6 = ", djacobi_6)
+print("7 = ", djacobi_7)
+print("GL = ", djacobi_GL)
 

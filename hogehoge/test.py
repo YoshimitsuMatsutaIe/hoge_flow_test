@@ -1,8 +1,24 @@
 
-import numpy as np
 
-a = np.array([[1, 2, 3, 4, 5]]).T
+# class hoge:
+#     def __init__(self, **kwargs):
+#         self.L = kwargs.pop('L')
+    
+#     def test(self, q):
+#         L = self.L
+#         print("L = ", L)
+#         return L + q
 
-b = np.array([[2, 10, -5, 3, 0]]).T
 
-print((a > b).any())
+# hogehoge = hoge(L = 23)
+
+# a = hogehoge.test(2)
+# print(a)
+
+# b = hogehoge.test(4)
+# print(b)
+
+
+import math
+print(math.cos(-math.pi/4))
+print(math.sqrt(2)/2)

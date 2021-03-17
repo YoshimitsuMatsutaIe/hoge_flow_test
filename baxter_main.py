@@ -14,26 +14,25 @@ from mpl_toolkits.mplot3d import Axes3D
 #fp = FontProperties(fname=r'C:\WINDOWS\Fonts\Arial.ttf', size=14)
 import time
 
-from baxter_utils import *
+# from baxter_utils_2 import *
+# from baxter_utils import *
+from baxter_utils_3 import *
 from RMP import *
 
+
 ### パラメータ ###
+BaxterKinema = BaxterKinematics3(L = 278e-3,
+                                 h = 64e-3,
+                                 H = 1104e-3,
+                                 L0 = 270.35e-3,
+                                 L1 = 69e-3,
+                                 L2 = 364.35e-3,
+                                 L3 = 69e-3,
+                                 L4 = 374.29e-3,
+                                 L5 = 10e-3,
+                                 L6 = 368.3e-3)
 
-L = 278e-3
-h = 64e-3
-H = 1104e-3
-
-L0 = 270.35e-3
-L1 = 69e-3
-L2 = 364.35e-3
-L3 = 69e-3
-L4 = 374.29e-3
-L5 = 10e-3
-L6 = 368.3e-3
-
-## クラス
-BaxterKinema = Kinematics(L, h, H, L0, L1, L2, L3, L4, L5, L6)
-
+# joint limits
 q1_min, q1_max = -141, 51
 q2_min, q2_max = -123, 60
 q3_min, q3_max = -173, 173
@@ -47,23 +46,25 @@ q_max = np.array([[q1_max, q2_max, q3_max, q4_max, q5_max, q6_max, q7_max]]).T *
 
 ### 初期値 ###
 # baxterの初期姿勢（規定）
-q1_init = 0 * pi / 180
-q2_init = -31 * pi / 180
-q3_init = 0 * pi / 180
-q4_init = 43 * pi / 180
-q5_init = 0 * pi / 180
-q6_init = 72 * pi / 180
-q7_init = 0 * pi / 180
-
-q = np.array([[q1_init, q2_init, q3_init, q4_init, q5_init, q6_init, q7_init]]).T  # ジョイント角度ベクトル
+q1_init = 0
+q2_init = -31
+q3_init = 0
+q4_init = 43
+q5_init = 0
+q6_init = 72
+q7_init = 0
+q = np.array([[q1_init, q2_init, q3_init, q4_init, q5_init, q6_init, q7_init]]).T * pi / 180 # ジョイント角度ベクトル
 dq = np.array([[0, 0, 0, 0, 0, 0, 0]]).T  # ジョイント角速度ベクトル
 origins = BaxterKinema.origins(q)  # 局所座標系の原点を計算
 dorigins = []
 for i in range(0, 11):
     dorigins.append(np.zeros((3, 1)))
-J_all = BaxterKinema.jacobi_ALL(q)
-dJ_all = BaxterKinema.djacobi_ALL(q, dq)
+J_all = BaxterKinema.jacobi_all(q)
+dJ_all = BaxterKinema.djacobi_all(q, dq)
 
+# print("origins = ", origins)
+# print("J_all = ", J_all)
+# print("dJ_all = ", dJ_all)
 
 ### 初期値格納 ###
 q_init_list = (q.ravel()).tolist()
@@ -99,7 +100,7 @@ dq_his.append(dq_temp)
 origins_his.append(origins_temp)
 
 
-time_span = 30  # シミュレーション時間[sec]
+time_span = 10  # シミュレーション時間[sec]
 time_interval = 0.1  # 刻み時間[sec]
 
 # 目標位置
@@ -109,14 +110,15 @@ goal_posi = np.array([[0.2, -0.6, 1]])
 #obs_posi = np.array([[0.4, -0.6, 1]])
 obs_posi = np.array([[0.6, -0.6, 1],
                      [0.6, -0.6, 1.05],
-                     [0.6, -0.6, 0.95]])
+                     [0.6, -0.6, 0.95],
+                     [0.6, -0.6, 1.10]])
 oend = obs_posi.shape[0]
 
 time_sim_start = time.time()
 
-# RMPのclass宣言
+# RMP豆乳
 RMP = RMP1(attract_max_speed = 1, 
-           attract_gain = 5, 
+           attract_gain = 10, 
            attract_a_damp_r = 0.3,
            attract_sigma_W = 1, 
            attract_sigma_H = 1, 
@@ -129,7 +131,6 @@ RMP = RMP1(attract_max_speed = 1,
            jl_gamma_p = 0.05,
            jl_gamma_d = 0.1,
            jl_lambda = 0.7)
-
 
 result = []
 
@@ -198,8 +199,8 @@ for t in np.arange(time_interval, time_span + time_interval, time_interval):
         
         # push演算
         origins = BaxterKinema.origins(q)
-        J_all = BaxterKinema.jacobi_ALL(q)
-        dJ_all = BaxterKinema.djacobi_ALL(q, dq)
+        J_all = BaxterKinema.jacobi_all(q)
+        dJ_all = BaxterKinema.djacobi_all(q, dq)
         dorigins = []
         for i in range(0, 11):
             dorigins.append(J_all[i] @ dq)
@@ -222,9 +223,9 @@ for t in np.arange(time_interval, time_span + time_interval, time_interval):
         origins_his.append(origins_temp)
         
         # ターミナルに計算値を表示（やると遅い）
-        print("t = ", t)
+        # print("t = ", t)
         # print("ee = ", origins[10].T)
-        print("error = ", np.linalg.norm(goal_posi.T - origins[10], ord=2))
+        # print("error = ", np.linalg.norm(goal_posi.T - origins[10], ord=2))
 
 tend = t
 if len(result) == 0:
