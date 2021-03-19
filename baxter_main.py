@@ -132,6 +132,16 @@ RMP = RMP1(attract_max_speed = 1,
            jl_gamma_d = 0.1,
            jl_lambda = 0.7)
 
+RMPGDS = RMP2(attract_max_speed = 0.1, 
+              attract_gain = 5,
+              attract_alpha_f = 0.3,
+              attract_sigma_alpha = 1,
+              attract_sigma_gamma = 1,
+              attract_w_u = 10,
+              attract_w_l = 1,
+              attract_alpha = 0.1,
+              attract_epsilon = 1e-5)
+
 result = []
 
 ### シミュレーション本体 ###
@@ -172,9 +182,15 @@ for t in np.arange(time_interval, time_span + time_interval, time_interval):
                 pull_M_all.append(pull_M)
             
             if i == 10:
-                a_GL = RMP.a_attract(origins[10], dorigins[10], goal_posi.T)
-                M_GL = RMP.metric_attract(origins[10], dorigins[10], goal_posi.T, a_GL)
-                f_GL = M_GL @ a_GL
+                # # RMP1
+                # a_GL = RMP.a_attract(origins[10], dorigins[10], goal_posi.T)
+                # M_GL = RMP.metric_attract(origins[10], dorigins[10], goal_posi.T, a_GL)
+                # f_GL = M_GL @ a_GL
+                
+                # RMP2
+                M_GL = RMPGDS.M_attract(origins[10], dorigins[10], goal_posi.T, np.zeros((3, 1)))
+                f_GL = RMPGDS.f_attract(origins[10], dorigins[10], goal_posi.T, np.zeros((3, 1)), M_GL)
+                
                 pull_f = J.T @ (f_GL - M_GL @ dJ @ dq)
                 pull_M = J.T @ M_GL @ J
                 pull_f_all.append(pull_f)

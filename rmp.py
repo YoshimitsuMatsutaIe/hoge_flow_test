@@ -5,6 +5,8 @@ import numpy as np
 import math
 from math import pi, cos, sin, tan
 
+from rmp_fromGDS_xi_M import *
+
 
 ## マニピュレータの論文[R1]のやつ
 def soft_normal(v, alpha):
@@ -146,49 +148,77 @@ class RMP1:
         return self.jl_lambda * np.eye(dof)
 
 
+
 class RMP2:
     """[R2],[R4]のやつ"""
     
     def __init__(self, **kwargs):
-        # アトラクター加速度
+        # アトラクターRMP関連
         self.attract_max_speed = kwargs.pop('attract_max_speed')
         self.attract_gain = kwargs.pop('attract_gain')
-        self.attrat_a_damp_r = kwargs.pop('attract_a_damp_r')
-        # アトラクター計量
-        self.attract_sigma_W = kwargs.pop('attract_sigma_W')
-        self.attract_sigma_H = kwargs.pop('attract_sigma_H')
-        self.attract_A_damp_r = kwargs.pop('attract_A_damp_r')
+        self.attract_alpha_f = kwargs.pop('attract_alpha_f')
+        self.attract_sigma_alpha = kwargs.pop('attract_sigma_alpha')
+        self.attract_sigma_gamma = kwargs.pop('attract_sigma_gamma')
+        self.attract_w_u = kwargs.pop('attract_w_u')
+        self.attract_w_l = kwargs.pop('attract_w_l')
+        self.attract_alpha = kwargs.pop('attract_alpha')
+        self.attract_epsilon = kwargs.pop('attract_epsilon')
         
-        # 障害物加速度
-        self.obs_scale_rep = kwargs.pop('obs_scale_rep')
-        self.obs_scale_damp = kwargs.pop('obs_scale_damp')
-        self.obs_ratio = kwargs.pop('obs_ratio')
-        self.obs_rep_gain = kwargs.pop('obs_rep_gain')
-        # 障害物計量
-        self.obs_r = kwargs.pop('obs_r')
+        # # 衝突回避関連
+        # self.obs_scale_rep = kwargs.pop('obs_scale_rep')
+        # self.obs_scale_damp = kwargs.pop('obs_scale_damp')
+        # self.obs_ratio = kwargs.pop('obs_ratio')
+        # self.obs_rep_gain = kwargs.pop('obs_rep_gain')
+        # # 障害物計量
+        # self.obs_r = kwargs.pop('obs_r')
         
-        # ジョイント制限処理加速度
-        self.jl_gamma_p = kwargs.pop('jl_gamma_p')
-        self.jl_gamma_d = kwargs.pop('jl_gamma_d')
-        # ジョイント制限処理計量
-        self.jl_lambda = kwargs.pop('jl_lambda')
+        # # ジョイント制限処理加速度
+        # self.jl_gamma_p = kwargs.pop('jl_gamma_p')
+        # self.jl_gamma_d = kwargs.pop('jl_gamma_d')
+        # # ジョイント制限処理計量
+        # self.jl_lambda = kwargs.pop('jl_lambda')
     
-    def f_attract(self, x, dx, xo):
+    def M_attract(self, x, dx, x0, dx0):
+        """アトラクター慣性行列"""
+        z = x0 - x
+        dz = dx0 - dx
+        M = attract_M(-z, 
+                      dz, 
+                      self.attract_sigma_alpha, 
+                      self.attract_sigma_gamma, 
+                      self.attract_w_u, 
+                      self.attract_w_l, 
+                      self.attract_alpha, 
+                      self.attract_epsilon)
+        return M
+    
+    def f_attract(self, x, dx, x0, dx0, M_attract):
         """アトラクト力"""
         # パラメーター
-        gamma_p = self.attract_attract_gain
-        gamma_d = self.attract_damp_gain
-        
+        gamma_p = self.attract_gain
+        gamma_d = self.attract_gain / self.attract_max_speed
+        alpha = self.attract_alpha_f
         # 変数変換
         z = x0 - x
-        dz = dx - dxo
+        dz = dx - dx0
         
         # メイン
         f1 = -gamma_p * soft_normal(z, alpha) - gamma_d * dz
+        xi_M = attract_xi_M(-z, 
+                            dz, 
+                            self.attract_sigma_alpha, 
+                            self.attract_sigma_gamma, 
+                            self.attract_w_u, 
+                            self.attract_w_l, 
+                            self.attract_alpha, 
+                            self.attract_epsilon)
+        carv = -np.linalg.inv(M_attract) @ xi_M
+        f = f1 + carv
+        return f
+    
+    
+    # def M_obs(self):
         
-        carv_term = -np.linalg.inv(M) @ xi_M
-        
-        return f1 + carv_term
 
 
 
