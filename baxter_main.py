@@ -17,7 +17,7 @@ import time
 # from baxter_utils_2 import *
 # from baxter_utils import *
 from baxter_utils_3 import *
-from RMP import *
+from rmp import *
 
 
 ### パラメータ ###
@@ -156,7 +156,7 @@ for t in np.arange(time_interval, time_span + time_interval, time_interval):
             for j in range(0, oend, 1):
                 # 障害物回避あり
                 a = RMP.a_obs(origins[i], dorigins[i], obs_posi[j:j+1, :].T)
-                M = RMP.A_obs(origins[i], dorigins[i], obs_posi[j:j+1].T, a)
+                M = RMP.metric_obs(origins[i], dorigins[i], obs_posi[j:j+1].T, a)
                 f = M @ a
                 
                 # # 障害物回避なし
@@ -173,7 +173,7 @@ for t in np.arange(time_interval, time_span + time_interval, time_interval):
             
             if i == 10:
                 a_GL = RMP.a_attract(origins[10], dorigins[10], goal_posi.T)
-                M_GL = RMP.A_attract(origins[10], dorigins[10], goal_posi.T, a_GL)
+                M_GL = RMP.metric_attract(origins[10], dorigins[10], goal_posi.T, a_GL)
                 f_GL = M_GL @ a_GL
                 pull_f = J.T @ (f_GL - M_GL @ dJ @ dq)
                 pull_M = J.T @ M_GL @ J
@@ -185,7 +185,7 @@ for t in np.arange(time_interval, time_span + time_interval, time_interval):
         
         # ジョイント制限処理RMPを配置空間で追加
         a_jl = RMP.a_joint_limit(q, dq, q_min, q_max)
-        M_jl = RMP.A_joint_limit(q)
+        M_jl = RMP.metric_joint_limit(q)
         f_jl = M_jl @ a_jl
         
         ## resolve演算

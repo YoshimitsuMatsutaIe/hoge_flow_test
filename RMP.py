@@ -1,4 +1,4 @@
-"""RMPのクラス"""
+"""RMPいろいろ"""
 
 
 import numpy as np
@@ -13,7 +13,7 @@ def soft_normal(v, alpha):
     softmax = v_norm + 1 / alpha * np.log(1 + np.exp(-2 * alpha * v_norm))
     return v / softmax
 
-def A_stretch(v, alpha):
+def metric_stretch(v, alpha):
     """空間を一方向に伸ばす計量"""
     xi = soft_normal(v, alpha)
     return xi @ xi.T
@@ -76,7 +76,7 @@ class RMP1:
         
         return gain * soft_normal(z0 - z, alpha) - damp * dz
     
-    def A_attract(self, z, dz, z0, a):
+    def metric_attract(self, z, dz, z0, a):
         """アトラクタ計量"""
         
         sigma_W = self.attract_sigma_W
@@ -118,7 +118,7 @@ class RMP1:
         #print("a_obs = ", a_rep + a_damp)
         return a_rep + a_damp
     
-    def A_obs(self, z, dz, z0, f_obs):
+    def metric_obs(self, z, dz, z0, f_obs):
         """障害物計量"""
         
         r = self.obs_r  # この半径外に障害物が来ると発散
@@ -140,7 +140,7 @@ class RMP1:
         #print("z = ", z)
         return np.linalg.inv(D_sigma(q, q_min, q_max)) @ z
     
-    def A_joint_limit(self, q):
+    def metric_joint_limit(self, q):
         """ジョイント制限処理計量"""
         dof = len(q)
         return self.jl_lambda * np.eye(dof)
@@ -180,7 +180,7 @@ class RMP2:
         gamma_d = self.attract_damp_gain
         
         # 変数変換
-        z = x - x0
+        z = x0 - x
         dz = dx - dxo
         
         # メイン
@@ -189,4 +189,12 @@ class RMP2:
         carv_term = -np.linalg.inv(M) @ xi_M
         
         return f1 + carv_term
+
+
+
+# class RMPTree1:
     
+#     def __init__(self, **kwargs):
+#         pass
+    
+#     def 
