@@ -1,4 +1,6 @@
-import sympy as sy
+"""csvファイルからxが40以上のものを探してリストアップするプログラム"""
+
+import numpy as np
 
 
-print(sy.eye(3))
+data = 

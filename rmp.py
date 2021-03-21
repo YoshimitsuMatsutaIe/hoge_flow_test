@@ -5,7 +5,7 @@ import numpy as np
 import math
 from math import pi, cos, sin, tan
 
-from rmp_fromGDS_xi_M import *
+from rmp_fromGDS_attract_xi_M import *
 
 
 ## マニピュレータの論文[R1]のやつ
@@ -38,7 +38,7 @@ def D_sigma(q, q_min, q_max):
     return np.diag(diags.ravel())
 
 
-class RMP1:
+class OriginalRMP:
     """論文[R1]のRMP
     論文そのまま
     """
@@ -65,6 +65,8 @@ class RMP1:
         self.jl_gamma_d = kwargs.pop('jl_gamma_d')
         # ジョイント制限処理計量
         self.jl_lambda = kwargs.pop('jl_lambda')
+        self.joint_limit_upper = kwargs.pop('joint_limit_upper')
+        self.joint_limit_lower = kwargs.pop('joint_limit_lower')
     
     
     ## アトラクターRMP
@@ -133,14 +135,20 @@ class RMP1:
     
     
     # ジョイント制限RMP
-    def a_joint_limit(self, q, dq, q_min, q_max):
+    def a_joint_limit(self, q, dq):
         """ジョイント制限処理加速度"""
         
         gamma_p = self.jl_gamma_p
         gamma_d = self.jl_gamma_d
         z = gamma_p * (-q) - gamma_d * dq
         #print("z = ", z)
-        return np.linalg.inv(D_sigma(q, q_min, q_max)) @ z
+        a = np.linalg.inv(
+            D_sigma(
+                q, 
+                self.joint_limit_lower, 
+                self.joint_limit_upper)) @ z
+        return a
+        
     
     def metric_joint_limit(self, q):
         """ジョイント制限処理計量"""
@@ -149,7 +157,33 @@ class RMP1:
 
 
 
-class RMP2:
+def jl_alpha_upper(dq, sigma):
+    return 1 - math.exp(-(max(dq, 0) ** 2) / (2 * sigma ** 2))
+
+def jl_alpha_lower(dq, sigma):
+    return 1 - math.exp(-(min(dq, 0) ** 2) / (2 * sigma ** 2))
+
+def jl_s(q, q_min, q_max):
+    return (q - q_min) / (q_max - q_min)
+
+def jl_b(q, dq, q_min, q_max, sigma):
+    """???を計算"""
+    s = jl_s(q, q_min, q_max)
+    d = 4 * s * (1 - s)
+    alpha_u = jl_alpha_upper(dq, sigma)
+    alpha_l = jl_alpha_lower(dq, sigma)
+    return s * (alpha_u * d + (1 - alpha_u)) + (1 - s) * (alpha_l * d + (1 - alpha_l))
+
+def dAiidqi(q, dq, q_min, q_max, sigma):
+    """????に使用"""
+    alpha_l = jl_alpha_lower(dq, sigma)
+    alpha_u = jl_alpha_upper(dq, sigma)
+    z = 2*(q_max - q_min)**6*(-4*alpha_l*(q - q_max)*(q - q_min) - 4*alpha_l*(q - q_max)*(2*q - q_max - q_min) + 4*alpha_u*(q - q_max)*(q - q_min) + 4*alpha_u*(q - q_min)*(2*q - q_max - q_min)\
+        - (1 - alpha_u)*(q_max - q_min)**2 - (alpha_l - 1)*(q_max - q_min)**2)\
+            /((q - q_max)*(4*alpha_l*(q - q_max)*(q - q_min) + (alpha_l - 1)*(q_max - q_min)**2) - (q - q_min)*(4*alpha_u*(q - q_max)*(q - q_min) + (alpha_u - 1)*(q_max - q_min)**2))**3
+    return z
+
+class RMPfromGDS:
     """[R2],[R4]のやつ"""
     
     def __init__(self, **kwargs):
@@ -172,54 +206,99 @@ class RMP2:
         # # 障害物計量
         # self.obs_r = kwargs.pop('obs_r')
         
-        # # ジョイント制限処理加速度
-        # self.jl_gamma_p = kwargs.pop('jl_gamma_p')
-        # self.jl_gamma_d = kwargs.pop('jl_gamma_d')
-        # # ジョイント制限処理計量
-        # self.jl_lambda = kwargs.pop('jl_lambda')
+        # ジョイント制限処理力
+        self.jl_gamma_p = kwargs.pop('jl_gamma_p')
+        self.jl_gamma_d = kwargs.pop('jl_gamma_d')
+        # ジョイント制限処理計量
+        self.jl_lambda = kwargs.pop('jl_lambda')
+        self.joint_limit_upper = kwargs.pop('joint_limit_upper')
+        self.joint_limit_lower = kwargs.pop('joint_limit_lower')
+        self.jl_sigma = kwargs.pop('jl_sigma')
     
-    def M_attract(self, x, dx, x0, dx0):
+    def inertia_attract(self, x, dx, x0, dx0):
         """アトラクター慣性行列"""
         z = x0 - x
         dz = dx0 - dx
-        M = attract_M(-z, 
-                      dz, 
-                      self.attract_sigma_alpha, 
-                      self.attract_sigma_gamma, 
-                      self.attract_w_u, 
-                      self.attract_w_l, 
-                      self.attract_alpha, 
-                      self.attract_epsilon)
+        M = attract_M(
+            z, 
+            dz, 
+            self.attract_sigma_alpha, 
+            self.attract_sigma_gamma, 
+            self.attract_w_u, 
+            self.attract_w_l, 
+            self.attract_alpha, 
+            self.attract_epsilon)
         return M
     
     def f_attract(self, x, dx, x0, dx0, M_attract):
-        """アトラクト力"""
+        """アトラクト力（加速度？）"""
         # パラメーター
         gamma_p = self.attract_gain
         gamma_d = self.attract_gain / self.attract_max_speed
         alpha = self.attract_alpha_f
         # 変数変換
         z = x0 - x
-        dz = dx - dx0
+        dz = dx0 - dx
         
         # メイン
         f1 = -gamma_p * soft_normal(z, alpha) - gamma_d * dz
-        xi_M = attract_xi_M(-z, 
-                            dz, 
-                            self.attract_sigma_alpha, 
-                            self.attract_sigma_gamma, 
-                            self.attract_w_u, 
-                            self.attract_w_l, 
-                            self.attract_alpha, 
-                            self.attract_epsilon)
+        xi_M = attract_xi_M(
+            z, 
+            dz, 
+            self.attract_sigma_alpha, 
+            self.attract_sigma_gamma, 
+            self.attract_w_u, 
+            self.attract_w_l, 
+            self.attract_alpha, 
+            self.attract_epsilon)
         carv = -np.linalg.inv(M_attract) @ xi_M
         f = f1 + carv
         return f
     
     
-    # def M_obs(self):
+    def metric_joint_limit(self, q, dq):
+        """ジョイント制限回避計量"""
+        A_ii = []
+        dof = len(q)
+        for i in range(0, dof, 1):
+            b = jl_b(
+                q[i, 0], 
+                dq[i, 0], 
+                self.joint_limit_lower[i, 0], 
+                self.joint_limit_upper[i, 0], 
+                self.jl_sigma)
+            A_ii.append(b ** (-2))
+        A = self.jl_lambda * np.diag(A_ii)
+        return A
+    
+    def f_joint_limit(self, q, dq, metric_jl):
+        """ジョイント制限処理力（加速度？）"""
         
-
+        gamma_p = self.jl_gamma_p
+        gamma_d = self.jl_gamma_d
+        ddq_old = gamma_p * (-q) - gamma_d * dq
+        
+        A = metric_jl
+        dof = len(q)
+        
+        d_xi_A = []
+        
+        for i in range(0, dof, 1):
+            dAdq = dAiidqi(
+                q[i, 0], 
+                dq[i, 0], 
+                self.joint_limit_lower[i, 0],
+                self.joint_limit_upper[i, 0],
+                self.jl_sigma)
+            d_xi_A.append(1/2 * dAdq * dq[i, 0])
+        
+        xi_A = np.diag(d_xi_A)
+        
+        carv = np.linalg.inv(A) @ xi_A
+        
+        f = ddq_old - carv
+        #print("z = ", z)
+        return f
 
 
 # class RMPTree1:

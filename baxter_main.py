@@ -21,16 +21,17 @@ from rmp import *
 
 
 ### パラメータ ###
-BaxterKinema = BaxterKinematics3(L = 278e-3,
-                                 h = 64e-3,
-                                 H = 1104e-3,
-                                 L0 = 270.35e-3,
-                                 L1 = 69e-3,
-                                 L2 = 364.35e-3,
-                                 L3 = 69e-3,
-                                 L4 = 374.29e-3,
-                                 L5 = 10e-3,
-                                 L6 = 368.3e-3)
+BaxterKinema = BaxterKinematics3(
+    L = 278e-3,
+    h = 64e-3,
+    H = 1104e-3,
+    L0 = 270.35e-3,
+    L1 = 69e-3,
+    L2 = 364.35e-3,
+    L3 = 69e-3,
+    L4 = 374.29e-3,
+    L5 = 10e-3,
+    L6 = 368.3e-3)
 
 # joint limits
 q1_min, q1_max = -141, 51
@@ -100,47 +101,60 @@ dq_his.append(dq_temp)
 origins_his.append(origins_temp)
 
 
-time_span = 10  # シミュレーション時間[sec]
+time_span = 20  # シミュレーション時間[sec]
 time_interval = 0.1  # 刻み時間[sec]
 
 # 目標位置
-goal_posi = np.array([[0.2, -0.6, 1]])
+goal_posi = np.array([[0.4, -0.6, 1]])
+goal_velo = np.array([[0, 0, 0]])
 
 # 障害物位置
 #obs_posi = np.array([[0.4, -0.6, 1]])
-obs_posi = np.array([[0.6, -0.6, 1],
-                     [0.6, -0.6, 1.05],
-                     [0.6, -0.6, 0.95],
-                     [0.6, -0.6, 1.10]])
+obs_posi = np.array([
+    [0.6, -0.6, 1],
+    [0.6, -0.6, 1.05],
+    [0.6, -0.6, 0.95],
+    [0.6, -0.6, 1.10]
+    ])
 oend = obs_posi.shape[0]
 
 time_sim_start = time.time()
 
 # RMP豆乳
-RMP = RMP1(attract_max_speed = 1, 
-           attract_gain = 10, 
-           attract_a_damp_r = 0.3,
-           attract_sigma_W = 1, 
-           attract_sigma_H = 1, 
-           attract_A_damp_r = 0.3, 
-           obs_scale_rep = 0.2,
-           obs_scale_damp = 1,
-           obs_ratio = 0.5,
-           obs_rep_gain = 0.5,
-           obs_r = 15,
-           jl_gamma_p = 0.05,
-           jl_gamma_d = 0.1,
-           jl_lambda = 0.7)
+RMP1 = OriginalRMP(
+    attract_max_speed = 1, 
+    attract_gain = 10, 
+    attract_a_damp_r = 0.3,
+    attract_sigma_W = 1, 
+    attract_sigma_H = 1, 
+    attract_A_damp_r = 0.3, 
+    obs_scale_rep = 0.2,
+    obs_scale_damp = 1,
+    obs_ratio = 0.5,
+    obs_rep_gain = 0.5,
+    obs_r = 15,
+    jl_gamma_p = 0.05,
+    jl_gamma_d = 0.1,
+    jl_lambda = 0.7,
+    joint_limit_upper = q_max,
+    joint_limit_lower = q_min)
 
-RMPGDS = RMP2(attract_max_speed = 0.1, 
-              attract_gain = 5,
-              attract_alpha_f = 0.3,
-              attract_sigma_alpha = 1,
-              attract_sigma_gamma = 1,
-              attract_w_u = 10,
-              attract_w_l = 1,
-              attract_alpha = 0.1,
-              attract_epsilon = 1e-5)
+RMP2 = RMPfromGDS(
+    attract_max_speed = 0.1, 
+    attract_gain = 1,
+    attract_alpha_f = 0.3,
+    attract_sigma_alpha = 1,
+    attract_sigma_gamma = 1,
+    attract_w_u = 1,
+    attract_w_l = 1,
+    attract_alpha = 0.1,
+    attract_epsilon = 1e-5,
+    jl_gamma_p = 0.05,
+    jl_gamma_d = 0.1,
+    jl_lambda = 0.7,
+    joint_limit_upper = q_max,
+    joint_limit_lower = q_min,
+    jl_sigma = 1)
 
 result = []
 
@@ -165,8 +179,8 @@ for t in np.arange(time_interval, time_span + time_interval, time_interval):
             ## RMP計算
             for j in range(0, oend, 1):
                 # 障害物回避あり
-                a = RMP.a_obs(origins[i], dorigins[i], obs_posi[j:j+1, :].T)
-                M = RMP.metric_obs(origins[i], dorigins[i], obs_posi[j:j+1].T, a)
+                a = RMP1.a_obs(origins[i], dorigins[i], obs_posi[j:j+1, :].T)
+                M = RMP1.metric_obs(origins[i], dorigins[i], obs_posi[j:j+1].T, a)
                 f = M @ a
                 
                 # # 障害物回避なし
@@ -183,13 +197,14 @@ for t in np.arange(time_interval, time_span + time_interval, time_interval):
             
             if i == 10:
                 # # RMP1
-                # a_GL = RMP.a_attract(origins[10], dorigins[10], goal_posi.T)
-                # M_GL = RMP.metric_attract(origins[10], dorigins[10], goal_posi.T, a_GL)
+                # a_GL = RMP1.a_attract(origins[10], dorigins[10], goal_posi.T)
+                # M_GL = RMP1.metric_attract(origins[10], dorigins[10], goal_posi.T, a_GL)
                 # f_GL = M_GL @ a_GL
                 
                 # RMP2
-                M_GL = RMPGDS.M_attract(origins[10], dorigins[10], goal_posi.T, np.zeros((3, 1)))
-                f_GL = RMPGDS.f_attract(origins[10], dorigins[10], goal_posi.T, np.zeros((3, 1)), M_GL)
+                M_GL = RMP2.inertia_attract(origins[10], dorigins[10], goal_posi.T, goal_velo.T)
+                f_GL = RMP2.f_attract(origins[10], dorigins[10], goal_posi.T, goal_velo.T, M_GL)
+                #f_GL = M_GL @ f_GL  # [R2]のモーションポリシーは加速度かも
                 
                 pull_f = J.T @ (f_GL - M_GL @ dJ @ dq)
                 pull_M = J.T @ M_GL @ J
@@ -199,10 +214,16 @@ for t in np.arange(time_interval, time_span + time_interval, time_interval):
         pull_f_all = np.sum(pull_f_all, axis = 0)
         pull_M_all = np.sum(pull_M_all, axis = 0)
         
-        # ジョイント制限処理RMPを配置空間で追加
-        a_jl = RMP.a_joint_limit(q, dq, q_min, q_max)
-        M_jl = RMP.metric_joint_limit(q)
-        f_jl = M_jl @ a_jl
+        # # ジョイント制限処理RMPを配置空間で追加
+        # # RMP1
+        # a_jl = RMP1.a_joint_limit(q, dq)
+        # M_jl = RMP1.metric_joint_limit(q)
+        # f_jl = M_jl @ a_jl
+        
+        # RMP2
+        M_jl = RMP2.metric_joint_limit(q, dq)
+        f_jl = RMP2.f_joint_limit(q, dq, M_jl)
+        #f_jl = M_jl @ a_jl
         
         ## resolve演算
         a = np.linalg.pinv(pull_M_all) @ pull_f_all  # 制御指令
@@ -244,12 +265,13 @@ for t in np.arange(time_interval, time_span + time_interval, time_interval):
         # print("error = ", np.linalg.norm(goal_posi.T - origins[10], ord=2))
 
 tend = t
+print("終了時刻（シミュレーション内） = ", tend, "[sec]")
 if len(result) == 0:
     print("時間切れ")
     result.append("timeout")
 
-print("シミュレーション終了")
-print("シミュレーション時間", time.time() - time_sim_start)
+print("計算終了")
+print("計算時間", time.time() - time_sim_start)
 
 ### データ保存 ###
 # f = open('out3.csv', 'w', newline = "")
@@ -299,9 +321,11 @@ for i in range(0, 11, 1):
     list_y.extend(origins_his_T[2 + 3 * i][1:])
     list_z.extend(origins_his_T[3 + 3 * i][1:])
 # 軸をセット
-max_range = np.array([max(list_x) - min(list_x),
-                      max(list_y) - min(list_y),
-                      max(list_z) - min(list_z)]).max() * 0.5
+max_range = np.array([
+    max(list_x) - min(list_x),
+    max(list_y) - min(list_y),
+    max(list_z) - min(list_z)
+    ]).max() * 0.5
 mid_x = (max(list_x) + min(list_x)) * 0.5
 mid_y = (max(list_y) + min(list_y)) * 0.5
 mid_z = (max(list_z) + min(list_z)) * 0.5
@@ -311,10 +335,14 @@ ax.set_zlim(mid_z - max_range, mid_z + max_range)
 
 
 # 目標点
-ax.scatter(goal_posi[0, 0], goal_posi[0, 1], goal_posi[0, 2],
-           s = 100, label = 'goal point', marker = '*', color = '#ff7f00', alpha = 1, linewidths = 1.5, edgecolors = 'red')
-ax.scatter(obs_posi[:, 0], obs_posi[:, 1], obs_posi[:, 2],
-           s = 100, label = 'obstacle point', marker = '+', color = 'k', alpha = 1)
+ax.scatter(
+    goal_posi[0, 0], goal_posi[0, 1], goal_posi[0, 2],
+    s = 100, label = 'goal point', marker = '*', color = '#ff7f00', 
+    alpha = 1, linewidths = 1.5, edgecolors = 'red')
+ax.scatter(
+    obs_posi[:, 0], obs_posi[:, 1], obs_posi[:, 2],
+    s = 100, label = 'obstacle point', marker = '+', color = 'k', 
+    alpha = 1)
 
 
 # アーム全体
@@ -330,17 +358,20 @@ bodys.append(ax.plot(body_x, body_y, body_z, "o-", color = "blue")[0])
 
 # グリッパー（エンドエフェクター）軌跡
 gl = []
-gl.append(ax.plot(origins_his_T[31][1:4], 
-                  origins_his_T[32][1:4], 
-                  origins_his_T[33][1:4], "-", label = "gl", color = "#ff7f00")[0])
+gl.append(ax.plot(
+    origins_his_T[31][1:4], 
+    origins_his_T[32][1:4], 
+    origins_his_T[33][1:4], "-", label = "gl", color = "#ff7f00")[0])
 
 # 局所座標系の原点の番号
 t_all = []
 name = ("o_Wo", "o_BL", "o_0", "o_1", "o_2", "o_3", "o_4", "o_5", "o_6", "o_7", "o_GL")
 for i in range(0, 11, 1):
-    t_all.append([ax.text(origins_his_T[3 * i + 1][1],
-                          origins_his_T[3 * i + 2][1],
-                          origins_his_T[3 * i + 3][1], name[i])])
+    t_all.append([ax.text(
+        origins_his_T[3 * i + 1][1],
+        origins_his_T[3 * i + 2][1],
+        origins_his_T[3 * i + 3][1], 
+        name[i])])
 
 #ax.legend()
 
@@ -366,9 +397,10 @@ def update(i):
         
         # 原点番号
         t_all[j].pop().remove()
-        t_, = [ax.text(origins_his_T[3 * j + 1][i],
-                       origins_his_T[3 * j + 2][i],
-                       origins_his_T[3 * j + 3][i], name[j])]
+        t_, = [ax.text(
+            origins_his_T[3 * j + 1][i],
+            origins_his_T[3 * j + 2][i],
+            origins_his_T[3 * j + 3][i], name[j])]
         t_all[j].append(t_)
     
     item1 = bodys.pop(0)
@@ -377,9 +409,10 @@ def update(i):
     
     item2 = gl.pop(0)
     ax.lines.remove(item2)
-    gl.append(ax.plot(origins_his_T[31][1:i], 
-                      origins_his_T[32][1:i], 
-                      origins_his_T[33][1:i], "-", color = "#ff7f00")[0])
+    gl.append(ax.plot(
+        origins_his_T[31][1:i], 
+        origins_his_T[32][1:i], 
+        origins_his_T[33][1:i], "-", color = "#ff7f00")[0])
     
     # 時刻表示
     timeani.pop().remove()
@@ -387,10 +420,11 @@ def update(i):
     timeani.append(timeani_)
     return None
 
-ani = anm.FuncAnimation(fig = fig_ani, 
-                        func = update, 
-                        frames = int(tend / time_interval),
-                        interval = time_interval * 0.001)
+ani = anm.FuncAnimation(
+    fig = fig_ani, 
+    func = update, 
+    frames = int(tend / time_interval),
+    interval = time_interval * 0.001)
 
 print("アニメ化完了")
 print("アニメ化時間", time.time() - time_ani_start)
@@ -400,9 +434,9 @@ print("アニメ化時間", time.time() - time_ani_start)
 #             writer='pillow')
 
 
-
 plt.show()
 
+print("\n")
 
 
 

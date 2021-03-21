@@ -104,20 +104,21 @@ obs_posi = np.array([[0.6, -0.6, 1]])
 time_sim_start = time.time()
 
 # RMPのclass宣言
-RMP = RMP1(attract_max_speed = 10, 
-           attract_gain = 30, 
-           attract_a_damp_r = 0.02,
-           attract_sigma_W = 1, 
-           attract_sigma_H = 1, 
-           attract_A_damp_r = 0.02, 
-           obs_scale_rep = 1,
-           obs_scale_damp = 1,
-           obs_ratio = 0.5,
-           obs_rep_gain = 1,
-           obs_r = 15,
-           jl_gamma_p = 0.01,
-           jl_gamma_d = 0.1,
-           jl_lambda = 0.1)
+RMP = RMP1(
+    attract_max_speed = 10, 
+    attract_gain = 30, 
+    attract_a_damp_r = 0.02,
+    attract_sigma_W = 1, 
+    attract_sigma_H = 1, 
+    attract_A_damp_r = 0.02, 
+    obs_scale_rep = 1,
+    obs_scale_damp = 1,
+    obs_ratio = 0.5,
+    obs_rep_gain = 1,
+    obs_r = 15,
+    jl_gamma_p = 0.01,
+    jl_gamma_d = 0.1,
+    jl_lambda = 0.1)
 
 
 result = []
