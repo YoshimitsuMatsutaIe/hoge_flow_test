@@ -184,7 +184,14 @@ def dAiidqi(q, dq, q_min, q_max, sigma):
     return z
 
 class RMPfromGDS:
-    """[R2],[R4]のやつ"""
+    """[R2],[R4]のRMP
+    
+    注意
+    0 ＜ w_l ＜ w_u ＜ infty
+    alpha_fはたぶん減速半径
+    
+    
+    """
     
     def __init__(self, **kwargs):
         # アトラクターRMP関連

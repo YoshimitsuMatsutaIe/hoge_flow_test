@@ -5,15 +5,16 @@ from math import pi, cos, sin, tan, atan
 
 class OpemLabKineatics:
     """オープンラボのロボットアームのクラス"""
-    def __init__(self, L0, L1, L2, L3, L4, L5, L6, H45):
-        self.L0 = L0
-        self.L1 = L1
-        self.L2 = L2
-        self.L3 = L3 
-        self.L4 = L4
-        self.L5 = L5
-        self.L6 = L6 
-        self.H45 = H45
+    
+    def __init__(self, **kwargs):
+        self.L0 = kwargs.pop("L0")
+        self.L1 = kwargs.pop("L1")
+        self.L2 = kwargs.pop("L2")
+        self.L3 = kwargs.pop("L3") 
+        self.L4 = kwargs.pop("L4")
+        self.L5 = kwargs.pop("L5")
+        self.L6 = kwargs.pop("L6") 
+        self.H45 = kwargs.pop("H45")
     
     # リンク基底原点位置
     def origin_0(self, q):
@@ -28,7 +29,7 @@ class OpemLabKineatics:
         z = np.array([
             [0], 
             [0], 
-            [l0]
+            [l0],
             ])
         return z
     
@@ -38,7 +39,7 @@ class OpemLabKineatics:
         z = np.array([
             [0], 
             [0], 
-            [l0 + l1]
+            [l0 + l1],
             ])
         return z
     
@@ -48,7 +49,7 @@ class OpemLabKineatics:
         z = np.array([
             [l2*sin(q2)*cos(q1)], 
             [l2*sin(q1)*sin(q2)], 
-            [l0 + l1 + l2*cos(q2)]
+            [l0 + l1 + l2*cos(q2)],
             ])
         return z
     
@@ -58,7 +59,7 @@ class OpemLabKineatics:
         z = np.array([
             [l2*sin(q2)*cos(q1) + l3*sin(q2 + q3)*cos(q1)], 
             [l2*sin(q1)*sin(q2) + l3*sin(q1)*sin(q2 + q3)], 
-            [l0 + l1 + l2*cos(q2) + l3*cos(q2 + q3)]
+            [l0 + l1 + l2*cos(q2) + l3*cos(q2 + q3)],
             ])
         return z
     
@@ -133,7 +134,7 @@ class OpemLabKineatics:
                 0, 
                 0, 
                 0, 
-                0
+                0,
             ], 
             [
                 l2*sin(q2)*cos(q1), 
@@ -141,7 +142,7 @@ class OpemLabKineatics:
                 0, 
                 0, 
                 0, 
-                0
+                0,
             ], 
             [
                 0, 
@@ -149,7 +150,7 @@ class OpemLabKineatics:
                 0, 
                 0, 
                 0, 
-                0
+                0,
             ]
             ])
         return z

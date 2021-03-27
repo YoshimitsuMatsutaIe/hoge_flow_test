@@ -17,16 +17,16 @@ from rmp import *
 
 iend = 8
 
-l0 = 0.09
-l1 = 0.02
-l2 = 0.104
-l3 = 0.098
-l4 = 0.052
-l5 = 0.03
-l6 = 0.08
-h45 = 0.028  #ジョイント4とジョイント5間の高さ
-
-Kinema = OpemLabKineatics(l0, l1, l2, l3, l4, l5, l6, h45)
+Kinema = OpemLabKineatics(
+    L0 = 0.09,
+    L1 = 0.02,
+    L2 = 0.104,
+    L3 = 0.098,
+    L4 = 0.052,
+    L5 = 0.03,
+    L6 = 0.08,
+    H45 = 0.028,
+)
 
 
 q1_min, q1_max = -pi/2, pi/2
@@ -94,7 +94,8 @@ time_span = 30  # シミュレーション時間[sec]
 time_interval = 0.1  # 刻み時間[sec]
 
 # 目標位置
-goal_posi = np.array([[-0.25, 0.0, 0.0]])
+goal_posi = np.array([[-0.2, 0.0, 0.0]])
+goal_velo = np.array([[0, 0, 0]])
 
 # 障害物位置
 #obs_posi = np.array([[0.4, -0.6, 1]])
@@ -104,9 +105,9 @@ obs_posi = np.array([[0.6, -0.6, 1]])
 time_sim_start = time.time()
 
 # RMPのclass宣言
-RMP = RMP1(
+RMP1 = OriginalRMP(
     attract_max_speed = 10, 
-    attract_gain = 30, 
+    attract_gain = 40, 
     attract_a_damp_r = 0.02,
     attract_sigma_W = 1, 
     attract_sigma_H = 1, 
@@ -118,8 +119,28 @@ RMP = RMP1(
     obs_r = 15,
     jl_gamma_p = 0.01,
     jl_gamma_d = 0.1,
-    jl_lambda = 0.1)
+    jl_lambda = 0.5,
+    joint_limit_upper = q_max,
+    joint_limit_lower = q_min,
+)
 
+RMP2 = RMPfromGDS(
+    attract_max_speed = 10, 
+    attract_gain = 1,
+    attract_alpha_f = 0.03,
+    attract_sigma_alpha = 1,
+    attract_sigma_gamma = 1,
+    attract_w_u = 10,
+    attract_w_l = 1,
+    attract_alpha = 0.03,
+    attract_epsilon = 1,
+    jl_gamma_p = 0.05,
+    jl_gamma_d = 0.1,
+    jl_lambda = 0.7,
+    joint_limit_upper = q_max,
+    joint_limit_lower = q_min,
+    jl_sigma = 1,
+)
 
 result = []
 
@@ -143,8 +164,8 @@ for t in np.arange(time_interval, time_span + time_interval, time_interval):
         for i in range(5, iend, 1):
             ## RMP計算
             # # 障害物会費あり
-            # a = RMP.a_obs(origins[i], dorigins[i], obs_posi.T)
-            # M = RMP.metric_obs(origins[i], dorigins[i], obs_posi.T, a)
+            # a = RMP1.a_obs(origins[i], dorigins[i], obs_posi.T)
+            # M = RMP1.metric_obs(origins[i], dorigins[i], obs_posi.T, a)
             # f = M @ a
             
             # 障害物回避なし
@@ -159,9 +180,15 @@ for t in np.arange(time_interval, time_span + time_interval, time_interval):
             pull_f_all.append(pull_f)
             pull_M_all.append(pull_M)
             if i == 7:
-                a_GL = RMP.a_attract(origins[7], dorigins[7], goal_posi.T)
-                M_GL = RMP.metric_attract(origins[7], dorigins[7], goal_posi.T, a_GL)
+                # RMP1
+                a_GL = RMP1.a_attract(origins[7], dorigins[7], goal_posi.T)
+                M_GL = RMP1.metric_attract(origins[7], dorigins[7], goal_posi.T, a_GL)
                 f_GL = M_GL @ a_GL
+                
+                # # RMP2
+                # M_GL = RMP2.inertia_attract(origins[7], dorigins[7], goal_posi.T, goal_velo.T)
+                # f_GL = RMP2.f_attract(origins[7], dorigins[7], goal_posi.T, goal_velo.T, M_GL)
+                
                 pull_f = J.T @ (f_GL - M_GL @ dJ @ dq)
                 pull_M = J.T @ M_GL @ J
                 pull_f_all.append(pull_f)
@@ -171,12 +198,10 @@ for t in np.arange(time_interval, time_span + time_interval, time_interval):
         pull_M_all = np.sum(pull_M_all, axis = 0)
         
         # ジョイント制限処理RMPを配置空間で追加
-        a_jl = RMP.a_joint_limit(q, dq, q_min, q_max)
-        M_jl = RMP.metric_joint_limit(q)
+        a_jl = RMP1.a_joint_limit(q, dq)
+        M_jl = RMP1.metric_joint_limit(q)
         f_jl = M_jl @ a_jl
-        
-        print("a_jl = ", a_jl)
-        
+        #print("a_jl = ", a_jl)
         pull_f_all += f_jl
         pull_M_all += M_jl
         
@@ -184,7 +209,7 @@ for t in np.arange(time_interval, time_span + time_interval, time_interval):
         ## resolve演算
         a = np.linalg.pinv(pull_M_all) @ pull_f_all  # 制御指令
         np.put(a, [5], 0)  # クローを閉じて実行するからdq6を0にする
-        print("a = ", a)
+        #print("a = ", a)
         
         # オイラー積分する
         dq = dq + a * time_interval
@@ -217,9 +242,9 @@ for t in np.arange(time_interval, time_span + time_interval, time_interval):
         
         # # ターミナルに計算値を表示（やると遅い）
         print("t = ", t)
-        print("q = ", q)
+        #print("q = ", q)
         # print("ee = ", origins[7].T)
-        # print("error = ", np.linalg.norm(goal_posi.T - origins[7], ord=2))
+        print("error = ", np.linalg.norm(goal_posi.T - origins[7], ord=2))
 
 tend = t
 if len(result) == 0:
