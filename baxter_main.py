@@ -31,7 +31,8 @@ BaxterKinema = BaxterKinematics3(
     L3 = 69e-3,
     L4 = 374.29e-3,
     L5 = 10e-3,
-    L6 = 368.3e-3)
+    L6 = 368.3e-3
+)
 
 # joint limits
 q1_min, q1_max = -141, 51
@@ -101,20 +102,21 @@ dq_his.append(dq_temp)
 origins_his.append(origins_temp)
 
 
-time_span = 20  # シミュレーション時間[sec]
+time_span = 10  # シミュレーション時間[sec]
 time_interval = 0.1  # 刻み時間[sec]
 
 # 目標位置
-goal_posi = np.array([[0.4, -0.6, 1]])
+goal_posi = np.array([[0.3, -0.6, 1]])
 goal_velo = np.array([[0, 0, 0]])
 
 # 障害物位置
 #obs_posi = np.array([[0.4, -0.6, 1]])
+#obs_posi = np.array([[10, 10, 10]])
 obs_posi = np.array([
     [0.6, -0.6, 1],
-    [0.6, -0.6, 1.05],
-    [0.6, -0.6, 0.95],
-    [0.6, -0.6, 1.10]
+    [0.6, -0.6, 1.1],
+    [0.6, -0.6, 0.9],
+    [0.6, -0.6, 1.2]
     ])
 oend = obs_posi.shape[0]
 
@@ -122,7 +124,7 @@ time_sim_start = time.time()
 
 # RMP豆乳
 RMP1 = OriginalRMP(
-    attract_max_speed = 1, 
+    attract_max_speed = 2, 
     attract_gain = 10, 
     attract_a_damp_r = 0.3,
     attract_sigma_W = 1, 
@@ -137,7 +139,8 @@ RMP1 = OriginalRMP(
     jl_gamma_d = 0.1,
     jl_lambda = 0.7,
     joint_limit_upper = q_max,
-    joint_limit_lower = q_min)
+    joint_limit_lower = q_min,
+    )
 
 RMP2 = RMPfromGDS(
     attract_max_speed = 0.1, 
@@ -154,7 +157,8 @@ RMP2 = RMPfromGDS(
     jl_lambda = 0.7,
     joint_limit_upper = q_max,
     joint_limit_lower = q_min,
-    jl_sigma = 1)
+    jl_sigma = 1,
+    )
 
 result = []
 
@@ -196,15 +200,15 @@ for t in np.arange(time_interval, time_span + time_interval, time_interval):
                 pull_M_all.append(pull_M)
             
             if i == 10:
-                # # RMP1
-                # a_GL = RMP1.a_attract(origins[10], dorigins[10], goal_posi.T)
-                # M_GL = RMP1.metric_attract(origins[10], dorigins[10], goal_posi.T, a_GL)
-                # f_GL = M_GL @ a_GL
+                # RMP1
+                a_GL = RMP1.a_attract(origins[10], dorigins[10], goal_posi.T)
+                M_GL = RMP1.metric_attract(origins[10], dorigins[10], goal_posi.T, a_GL)
+                f_GL = M_GL @ a_GL
                 
-                # RMP2
-                M_GL = RMP2.inertia_attract(origins[10], dorigins[10], goal_posi.T, goal_velo.T)
-                f_GL = RMP2.f_attract(origins[10], dorigins[10], goal_posi.T, goal_velo.T, M_GL)
-                #f_GL = M_GL @ f_GL  # [R2]のモーションポリシーは加速度かも
+                # # RMP2
+                # M_GL = RMP2.inertia_attract(origins[10], dorigins[10], goal_posi.T, goal_velo.T)
+                # f_GL = RMP2.f_attract(origins[10], dorigins[10], goal_posi.T, goal_velo.T, M_GL)
+                # #f_GL = M_GL @ f_GL  # [R2]のモーションポリシーは加速度かも
                 
                 pull_f = J.T @ (f_GL - M_GL @ dJ @ dq)
                 pull_M = J.T @ M_GL @ J
@@ -214,16 +218,16 @@ for t in np.arange(time_interval, time_span + time_interval, time_interval):
         pull_f_all = np.sum(pull_f_all, axis = 0)
         pull_M_all = np.sum(pull_M_all, axis = 0)
         
-        # # ジョイント制限処理RMPを配置空間で追加
-        # # RMP1
-        # a_jl = RMP1.a_joint_limit(q, dq)
-        # M_jl = RMP1.metric_joint_limit(q)
-        # f_jl = M_jl @ a_jl
+        # ジョイント制限処理RMPを配置空間で追加
+        # RMP1
+        a_jl = RMP1.a_joint_limit(q, dq)
+        M_jl = RMP1.metric_joint_limit(q)
+        f_jl = M_jl @ a_jl
         
-        # RMP2
-        M_jl = RMP2.metric_joint_limit(q, dq)
-        f_jl = RMP2.f_joint_limit(q, dq, M_jl)
-        #f_jl = M_jl @ a_jl
+        # # RMP2
+        # M_jl = RMP2.metric_joint_limit(q, dq)
+        # f_jl = RMP2.f_joint_limit(q, dq, M_jl)
+        # #f_jl = M_jl @ a_jl
         
         ## resolve演算
         a = np.linalg.pinv(pull_M_all) @ pull_f_all  # 制御指令
@@ -429,7 +433,7 @@ ani = anm.FuncAnimation(
 print("アニメ化完了")
 print("アニメ化時間", time.time() - time_ani_start)
 
-# ani.save(filename = "hogehooge.gif", 
+# ani.save(filename = "hogehooge2.gif", 
 #             fps = 1 / time_interval, 
 #             writer='pillow')
 

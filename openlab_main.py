@@ -399,9 +399,9 @@ ani = anm.FuncAnimation(fig = fig_ani,
 print("アニメ化完了")
 print("アニメ化時間", time.time() - time_ani_start)
 
-# ani.save(filename = "hogehooge.gif", 
-#             fps = 1 / time_interval, 
-#             writer='pillow')
+ani.save(filename = "hogehooge3.gif", 
+            fps = 1 / time_interval, 
+            writer='pillow')
 
 
 
