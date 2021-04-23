@@ -5,7 +5,7 @@ import numpy as np
 import math
 from math import pi, cos, sin, tan
 
-from rmp_fromGDS_attract_xi_M import *
+import rmp_fromGDS_attract_xi_M
 
 
 ## マニピュレータの論文[R1]のやつ
@@ -226,7 +226,7 @@ class RMPfromGDS:
         """アトラクター慣性行列"""
         z = x0 - x
         dz = dx0 - dx
-        M = attract_M(
+        M = rmp_fromGDS_attract_xi_M.attract_M(
             z, 
             dz, 
             self.attract_sigma_alpha, 
@@ -249,7 +249,7 @@ class RMPfromGDS:
         
         # メイン
         f1 = -gamma_p * soft_normal(z, alpha) - gamma_d * dz
-        xi_M = attract_xi_M(
+        xi_M = rmp_fromGDS_attract_xi_M.attract_xi_M(
             z, 
             dz, 
             self.attract_sigma_alpha, 
@@ -313,4 +313,7 @@ class RMPfromGDS:
 #     def __init__(self, **kwargs):
 #         pass
     
-#     def 
+#     def
+
+if __name__ == "__main__":
+    pass

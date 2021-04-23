@@ -16,12 +16,12 @@ import time
 
 # from baxter_utils_2 import *
 # from baxter_utils import *
-from baxter_utils_3 import *
-from rmp import *
+import baxter_utils_3
+import rmp
 
 
 ### パラメータ ###
-BaxterKinema = BaxterKinematics3(
+BaxterKinema = baxter_utils_3.BaxterKinematics3(
     L = 278e-3,
     h = 64e-3,
     H = 1104e-3,
@@ -122,8 +122,8 @@ oend = obs_posi.shape[0]
 
 time_sim_start = time.time()
 
-# RMP豆乳
-RMP1 = OriginalRMP(
+# RMP
+RMP1 = rmp.OriginalRMP(
     attract_max_speed = 2, 
     attract_gain = 10, 
     attract_a_damp_r = 0.3,
@@ -142,7 +142,7 @@ RMP1 = OriginalRMP(
     joint_limit_lower = q_min,
     )
 
-RMP2 = RMPfromGDS(
+RMP2 = rmp.RMPfromGDS(
     attract_max_speed = 0.1, 
     attract_gain = 1,
     attract_alpha_f = 0.3,

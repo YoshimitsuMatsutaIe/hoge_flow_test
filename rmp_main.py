@@ -1,3 +1,4 @@
+"""作成中"""
 import rmp
 
 class RMPalgebla(rmp.OriginalRMP):
@@ -11,9 +12,18 @@ class RMPalgebla(rmp.OriginalRMP):
     
     
     def push(self):
+        
         return None
     
     def pull(self):
         return None
     
     def resolve(self):
+        return None
+
+
+
+
+
+if __name__ == "__main__":
+    pass
