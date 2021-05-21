@@ -7,7 +7,7 @@ from math import cos, sin, tan, pi, sqrt
 
 
 class BaxterKinematicsNew:
-    """ローカル座標系の原点，ヤコビ行列等を計算
+    """ローカル座標系の原点，ヤコビ行列等を計算\n
     ・行列べた書きを廃止
     """
     
@@ -22,9 +22,6 @@ class BaxterKinematicsNew:
         self.L4 = kwargs.pop('L4')
         self.L5 = kwargs.pop('L5')
         self.L6 = kwargs.pop('L6')
-        
-        return None
-    
     
     # def homo_transf_matrix(self, theta, a, alpha, d):
     #     """DH記法で使う
@@ -177,6 +174,17 @@ class BaxterKinematicsNew:
             [0, 0, 0, 0],
         ])
         
+        dT_i_j = [
+            dT_0_1dq1,
+            dT_1_2dq2,
+            dT_2_3dq3,
+            dT_3_4dq4,
+            dT_4_5dq5,
+            dT_5_6dq6,
+            dT_6_7dq7,
+        ]
+        #print(dT_i_j)
+        
         dTdq1 = dTdq2 = dTdq3 = dTdq4 = dTdq5 = dTdq6 = dTdq7 = []
         for i, T in enumerate(self.T_i_j):
             if i == 0 or i == 1:
@@ -187,6 +195,7 @@ class BaxterKinematicsNew:
                 dTdq5.append(np.zeros((4, 4)))
                 dTdq6.append(np.zeros((4, 4)))
                 dTdq7.append(np.zeros((4, 4)))
+                
             elif i == 2:
                 dTdq1.append(self.T_Wo_j[i-1] @ dT_0_1dq1)
                 dTdq2.append(np.zeros((4, 4)))
@@ -251,8 +260,10 @@ class BaxterKinematicsNew:
                 dTdq5.append(dTdq5[i-1] @ T)
                 dTdq6.append(dTdq6[i-1] @ T)
                 dTdq7.append(dTdq7[i-1] @ T)
+            
+            print('\n', i)
+            print(dTdq1[-1], dTdq2[-1], dTdq3[-1], dTdq4[-1], dTdq5[-1], dTdq6[-1], dTdq7[-1])
         
-        print(len(self.T_Wo_j))
         jacobi = [
             np.concatenate(
                 [
@@ -274,3 +285,32 @@ class BaxterKinematicsNew:
     def calc_jacobi(self, q):
         self.init_jacobi(q)
         return self.jacobi
+
+
+if __name__ == '__main__':
+    BaxterKinema_2 = BaxterKinematicsNew(
+        L = 278e-3,
+        h = 64e-3,
+        H = 1104e-3,
+        L0 = 270.35e-3,
+        L1 = 69e-3,
+        L2 = 364.35e-3,
+        L3 = 69e-3,
+        L4 = 374.29e-3,
+        L5 = 10e-3,
+        L6 = 368.3e-3
+    )
+    
+    q1_init = 0
+    q2_init = -31
+    q3_init = 0
+    q4_init = 43
+    q5_init = 0
+    q6_init = 72
+    q7_init = 0
+    q = np.array([[q1_init, q2_init, q3_init, q4_init, q5_init, q6_init, q7_init]]).T * np.pi / 180
+    
+    x_2 = BaxterKinema_2.origins(q)
+    J_2 = BaxterKinema_2.calc_jacobi(q)
+    #print(x_2)
+    #print(J_2)
