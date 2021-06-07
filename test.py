@@ -61,3 +61,4 @@ x_2 = BaxterKinema_2.origins(q)
 J_2 = BaxterKinema_2.calc_jacobi(q)
 #print(x_2)
 print(J_2)
+
