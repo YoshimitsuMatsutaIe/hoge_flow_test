@@ -1,61 +1,31 @@
 """作成中"""
 
 import numpy as np
-
 import rmp
 
 
 
-class RMPAlgebla:
-    """RMP代数"""
-    
-    def __init__(self):
-        return
-    
-    
-    def push(self, psi, J):
-        """pushforword演算"""
-        
-        if self.psi is not None and self.J is not None:
-            self.x = self.psi(self.parent.x)
-            self.dx = self.J(self.parent.x) @ self.parent.dx
-        
-        [child.push() for child in self.children]
-    
-    
-    def pull(self,):
-        """pullback演算"""
-        
-        [child.pull() for child in self.children]
-        
-        f = np.zeros_like(self.x)
-        M = np.zeros((max(self.x.shape), max(self.x.shape)))
-        
-        for child in self.children:
-            J_child = child.J(self.x)
-            dJ_child = child.dJ(self.x, self.dx)
-            
-            if child.f is not None and child.M is not None:
-                f += J_child.T @ \
-                    (child.f - child.M @ dJ_child @ self.dx)
-                M += J_child.T @ child.M @ J_child
-        
-        self.f = f
-        self.M = M
-    
-    
-    def resolve(self):
-        return None
+def mini_push(x, dx, psi, J):
+    """1個だけpush"""
+    y = psi(x)
+    dy = J(x) @ dx
+    return y, dy
+
+def mini_pull(x, dx, J, dJ, f, M):
+    """1個だけpull"""
+    fi = J(x).T @ (f - M @ dJ(x, dx) @ dx)
+    Mi = J(x).T @ M @ J(x)
+    return fi, Mi
+
+def mini_resolve(f, M):
+    a = np.linalg.pinv(M) @ f
+    return a
 
 
-
-class RMPNode(RMPAlgebla):
-    """RMPtreeのnode"""
+class RMPNode:
+    """RMPtreeのnode（rootとleaf以外）"""
     
     def __init__(self, name, parent, psi, J, dJ,):
-        
-        RMPAlgebla.__init__(self,)
-        
         self.name = name
         self.parent = parent
         self.children = []
@@ -65,14 +35,90 @@ class RMPNode(RMPAlgebla):
         
         self.x = None
         self.dx = None
-        
         self.f = None
         self.a = None
         self.M = None
     
     
     def add_child(self, child):
+        """子供を追加"""
         self.children.append(child)
+        return
+    
+    
+    def pushforward(self,):
+        """parentノード ⇒ childノード
+        
+        再帰関数？
+        """
+        
+        if self.psi is not None and self.J is not None:
+            self.x, self.dx = mini_push(self.dx, self.dx, self.psi, self.J)
+        
+        [child.pushforward() for child in self.children]
+    
+    
+    def pullback(self,):
+        """childノード ⇒ parentノード"""
+        
+        [child.pullback for child in self.children]
+        
+        f = np.zeros_like(self.x)
+        M = np.zeros((max(self.x.shape), max(self.x.shape)))
+        
+        for child in self.children:
+            if child.f is not None and child.M is not None:
+                fi, Mi = mini_pull(
+                    self.x, self.dx, child.J, child.dJ, child.f, child.M,
+                    )
+                f += fi
+                M += Mi
+        
+        self.f = f
+        self.M = M
+
+
+
+class RMPRoot(RMPNode):
+    """rootノード"""
+    
+    def __init__(self, name):
+        super().__init__(
+            self, name=name, parent=None, psi=None, J=None, dJ=None
+        )
+        return
+    
+    
+    def set_root_state(self, x, dx,):
+        self.x = x
+        self.dx = dx
+        return
+    
+    
+    def pushforward(self):
+        [child.pushforward for child in self.children]
+    
+    
+    def resolve(self,):
+        self.a = mini_resolve(self.f, self.M)
+        return self.a
+    
+    
+    def solve(self, x, dx,):
+        self.set_root_state(x, dx)
+        self.pushforward()
+        self.pullback()
+        optiomal_ddq = self.resolve()
+        
+        return optiomal_ddq
+
+
+
+class RMPLeafBase(RMPNode):
+    """leafノードのベース"""
+    
+    def __init__(self, ):
+        return
 
 
 class RMPTree:
