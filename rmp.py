@@ -183,6 +183,8 @@ def dAiidqi(q, dq, q_min, q_max, sigma):
             /((q - q_max)*(4*alpha_l*(q - q_max)*(q - q_min) + (alpha_l - 1)*(q_max - q_min)**2) - (q - q_min)*(4*alpha_u*(q - q_max)*(q - q_min) + (alpha_u - 1)*(q_max - q_min)**2))**3
     return z
 
+
+
 class RMPfromGDS:
     """[R2],[R4]のRMP
     
@@ -222,6 +224,7 @@ class RMPfromGDS:
         self.joint_limit_lower = kwargs.pop('joint_limit_lower')
         self.jl_sigma = kwargs.pop('jl_sigma')
     
+    
     def inertia_attract(self, x, dx, x0, dx0):
         """アトラクター慣性行列"""
         z = x0 - x
@@ -236,6 +239,7 @@ class RMPfromGDS:
             self.attract_alpha, 
             self.attract_epsilon)
         return M
+    
     
     def f_attract(self, x, dx, x0, dx0, M_attract):
         """アトラクト力（加速度？）"""

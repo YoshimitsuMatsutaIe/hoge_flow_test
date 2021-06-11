@@ -1,7 +1,6 @@
 """作成中"""
 
 import numpy as np
-import rmp
 
 
 class RMPAlgebra:
@@ -63,7 +62,7 @@ class RMPNode:
     
     
     def pullback(self,):
-        """childノード ⇒ parentノード"""
+        """childノード -> parentノード"""
         
         [child.pullback for child in self.children]
         
@@ -87,7 +86,7 @@ class RMPRoot(RMPNode):
     """rootノード"""
     
     def __init__(self, name):
-        super().__init__(
+        RMPNode.__init__(
             self, name=name, parent=None, psi=None, J=None, dJ=None
         )
         return
@@ -121,19 +120,27 @@ class RMPRoot(RMPNode):
 class RMPLeafBase(RMPNode):
     """leafノードのベース"""
     
-    def __init__(self, name, parent, parent_param, psi, J, dJ, RMP_func):
-        super().__init__(self, name=name, parent=parent, psi=psi,J=J, dJ=dJ)
-        
-
-
-class RMPTree:
+    def __init__(self, name, parent, parent_param, psi, J, dJ, rmp):
+        RMPNode.__init__(
+            self, name=name, parent=parent, psi=psi,J=J, dJ=dJ
+        )
+        self.rmp = rmp
+        self.parent_param = parent_param
     
-    def __init__(self,):
-        pass
-
-
-
-
+    
+    def eval_leaf(self,):
+        self.f, self.M = self.rmp(self.x, self.dx)
+        return
+    
+    
+    def pullback(self,):
+        self.eval_leaf()
+        return
+    
+    
+    def update(self):
+        self.pushforward()
+        return
 
 
 if __name__ == "__main__":
