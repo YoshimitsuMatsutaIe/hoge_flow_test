@@ -4,22 +4,26 @@ import numpy as np
 import rmp
 
 
-
-def mini_push(x, dx, psi, J):
-    """1個だけpush"""
-    y = psi(x)
-    dy = J(x) @ dx
-    return y, dy
-
-def mini_pull(x, dx, J, dJ, f, M):
-    """1個だけpull"""
-    fi = J(x).T @ (f - M @ dJ(x, dx) @ dx)
-    Mi = J(x).T @ M @ J(x)
-    return fi, Mi
-
-def mini_resolve(f, M):
-    a = np.linalg.pinv(M) @ f
-    return a
+class RMPAlgebra:
+    
+    @classmethod
+    def pushforward(cls, x, dx, psi, J):
+        """1個だけpush"""
+        y = psi(x)
+        dy = J(x) @ dx
+        return y, dy
+    
+    @classmethod
+    def pullback(cls, x, dx, J, dJ, f, M):
+        """1個だけpull"""
+        fi = J(x).T @ (f - M @ dJ(x, dx) @ dx)
+        Mi = J(x).T @ M @ J(x)
+        return fi, Mi
+    
+    @classmethod
+    def resolve(cls, f, M):
+        a = np.linalg.pinv(M) @ f
+        return a
 
 
 class RMPNode:
@@ -53,7 +57,7 @@ class RMPNode:
         """
         
         if self.psi is not None and self.J is not None:
-            self.x, self.dx = mini_push(self.dx, self.dx, self.psi, self.J)
+            self.x, self.dx = RMPAlgebra.pushforward(self.dx, self.dx, self.psi, self.J)
         
         [child.pushforward() for child in self.children]
     
@@ -68,7 +72,7 @@ class RMPNode:
         
         for child in self.children:
             if child.f is not None and child.M is not None:
-                fi, Mi = mini_pull(
+                fi, Mi = RMPAlgebra.pullback(
                     self.x, self.dx, child.J, child.dJ, child.f, child.M,
                     )
                 f += fi
@@ -100,7 +104,7 @@ class RMPRoot(RMPNode):
     
     
     def resolve(self,):
-        self.a = mini_resolve(self.f, self.M)
+        self.a = RMPAlgebra.resolve(self.f, self.M)
         return self.a
     
     
@@ -117,8 +121,9 @@ class RMPRoot(RMPNode):
 class RMPLeafBase(RMPNode):
     """leafノードのベース"""
     
-    def __init__(self, ):
-        return
+    def __init__(self, name, parent, parent_param, psi, J, dJ, RMP_func):
+        super().__init__(self, name=name, parent=parent, psi=psi,J=J, dJ=dJ)
+        
 
 
 class RMPTree:
