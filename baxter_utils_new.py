@@ -235,110 +235,15 @@ class BaxterKinematicsNew:
         
         dTdq = [dTdq1, dTdq2, dTdq3, dTdq4, dTdq5, dTdq6, dTdq7,]
         
+        print(len(dTdq[1]))
+        
         jacobi = []
-        for dT_list in dTdq:
-            j = []
-            for dT in dT_list:
-                j.append(dT[3:4, 0:3])
-            jacobi.append(np.concatenate(j, axis = 1))
-        
-        print(jacobi)
+        for i in range(len(dTdq1)):
+            J = []
+            for j in range(7):
+                J.append(dTdq[j][i][0:3, 3:4])
+            jacobi.append(np.concatenate(J, axis = 1))
         self.jacobi = jacobi
-        
-        # dTdq1 = dTdq2 = dTdq3 = dTdq4 = dTdq5 = dTdq6 = dTdq7 = []
-        # for i, T in enumerate(self.T_i_j[1:]):
-        #     if i == 0 or i == 1:
-        #         dTdq1.append(np.zeros((4, 4)))
-        #         dTdq2.append(np.zeros((4, 4)))
-        #         dTdq3.append(np.zeros((4, 4)))
-        #         dTdq4.append(np.zeros((4, 4)))
-        #         dTdq5.append(np.zeros((4, 4)))
-        #         dTdq6.append(np.zeros((4, 4)))
-        #         dTdq7.append(np.zeros((4, 4)))
-                
-        #     elif i == 2:
-        #         dTdq1.append(self.T_Wo_j[i-1] @ dT_0_1dq1)
-        #         dTdq2.append(np.zeros((4, 4)))
-        #         dTdq3.append(np.zeros((4, 4)))
-        #         dTdq4.append(np.zeros((4, 4)))
-        #         dTdq5.append(np.zeros((4, 4)))
-        #         dTdq6.append(np.zeros((4, 4)))
-        #         dTdq7.append(np.zeros((4, 4)))
-        #     elif i == 3:
-        #         dTdq1.append(dTdq1[i-1] @ T)
-        #         dTdq2.append(self.T_Wo_j[i-1] @ dT_1_2dq2)
-        #         dTdq3.append(np.zeros((4, 4)))
-        #         dTdq4.append(np.zeros((4, 4)))
-        #         dTdq5.append(np.zeros((4, 4)))
-        #         dTdq6.append(np.zeros((4, 4)))
-        #         dTdq7.append(np.zeros((4, 4)))
-        #     elif i == 4:
-        #         dTdq1.append(dTdq1[i-1] @ T)
-        #         dTdq2.append(dTdq2[i-1] @ T)
-        #         dTdq3.append(self.T_Wo_j[i-1] @ dT_2_3dq3)
-        #         dTdq4.append(np.zeros((4, 4)))
-        #         dTdq5.append(np.zeros((4, 4)))
-        #         dTdq6.append(np.zeros((4, 4)))
-        #         dTdq7.append(np.zeros((4, 4)))
-        #     elif i == 5:
-        #         dTdq1.append(dTdq1[i-1] @ T)
-        #         dTdq2.append(dTdq2[i-1] @ T)
-        #         dTdq3.append(dTdq3[i-1] @ T)
-        #         dTdq4.append(self.T_Wo_j[i-1] @ dT_3_4dq4)
-        #         dTdq5.append(np.zeros((4, 4)))
-        #         dTdq6.append(np.zeros((4, 4)))
-        #         dTdq7.append(np.zeros((4, 4)))
-        #     elif i == 6:
-        #         dTdq1.append(dTdq1[i-1] @ T)
-        #         dTdq2.append(dTdq2[i-1] @ T)
-        #         dTdq3.append(dTdq3[i-1] @ T)
-        #         dTdq4.append(dTdq4[i-1] @ T)
-        #         dTdq5.append(self.T_Wo_j[i-1] @ dT_4_5dq5)
-        #         dTdq6.append(np.zeros((4, 4)))
-        #         dTdq7.append(np.zeros((4, 4)))
-        #     elif i == 7:
-        #         dTdq1.append(dTdq1[i-1] @ T)
-        #         dTdq2.append(dTdq2[i-1] @ T)
-        #         dTdq3.append(dTdq3[i-1] @ T)
-        #         dTdq4.append(dTdq4[i-1] @ T)
-        #         dTdq5.append(dTdq5[i-1] @ T)
-        #         dTdq6.append(self.T_Wo_j[i-1] @ dT_5_6dq6)
-        #         dTdq7.append(np.zeros((4, 4)))
-        #     elif i == 8:
-        #         dTdq1.append(dTdq1[i-1] @ T)
-        #         dTdq2.append(dTdq2[i-1] @ T)
-        #         dTdq3.append(dTdq3[i-1] @ T)
-        #         dTdq4.append(dTdq4[i-1] @ T)
-        #         dTdq5.append(dTdq5[i-1] @ T)
-        #         dTdq6.append(dTdq6[i-1] @ T)
-        #         dTdq7.append(self.T_Wo_j[i-1] @ dT_6_7dq7)
-        #     else:
-        #         dTdq1.append(dTdq1[i-1] @ T)
-        #         dTdq2.append(dTdq2[i-1] @ T)
-        #         dTdq3.append(dTdq3[i-1] @ T)
-        #         dTdq4.append(dTdq4[i-1] @ T)
-        #         dTdq5.append(dTdq5[i-1] @ T)
-        #         dTdq6.append(dTdq6[i-1] @ T)
-        #         dTdq7.append(dTdq7[i-1] @ T)
-            
-        #     print('\n', i)
-        #     print(dTdq1[-1], dTdq2[-1], dTdq3[-1], dTdq4[-1], dTdq5[-1], dTdq6[-1], dTdq7[-1])
-        
-        # jacobi = [
-        #     np.concatenate(
-        #         [
-        #             dTdq1[i][0:3, 3:4],
-        #             dTdq2[i][0:3, 3:4],
-        #             dTdq3[i][0:3, 3:4],
-        #             dTdq4[i][0:3, 3:4],
-        #             dTdq5[i][0:3, 3:4],
-        #             dTdq6[i][0:3, 3:4],
-        #             dTdq7[i][0:3, 3:4],
-        #         ],
-        #         axis = 1,
-        #     ) for i in range(11)
-        # ]
-        # self.jacobi = jacobi
         
         return
     
@@ -377,4 +282,7 @@ if __name__ == '__main__':
         L6 = 368.3e-3
     )
     J_3 = BaxterKinema_3.jacobi_all(q)
-    print(J_3)
+    #print(J_3)
+    
+    for i in range(len(J_2)):
+        print(J_2[i] - J_3[i])
