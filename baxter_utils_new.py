@@ -281,8 +281,26 @@ if __name__ == '__main__':
         L5 = 10e-3,
         L6 = 368.3e-3
     )
+    x_3 = BaxterKinema_3.origins(q)
     J_3 = BaxterKinema_3.jacobi_all(q)
     #print(J_3)
     
-    for i in range(len(J_2)):
+    
+    # ヤコビ確認
+    for i in range(7):
         print(J_2[i] - J_3[i])
+    
+    print('New')
+    for i in range(7):
+        print(J_2[i])
+    
+    print('old3')
+    for i in range(7):
+        print(J_3[i])
+    
+    
+    # # 原点確認
+    # for i in range(11):
+    #     print(np.linalg.norm(x_2[i] - x_3[i]))
+    
+    
