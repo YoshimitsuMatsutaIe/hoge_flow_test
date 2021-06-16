@@ -169,6 +169,7 @@ class TargetAttracttorFromGDS(rmp_tree.RMPLeafBase):
         norm_x = np.linalg.norm(x)
         hat_x = x / norm_x
         
+        # 慣性行列を計算
         alpha = math.exp(-norm_x**2 / (2*self.attract_sigma_alpha**2))
         gamma = math.exp(-norm_x**2 / (2*self.attract_sigma_gamma**2))
         w = gamma * self.attract_w_upper + (1 - gamma) * self.attract_w_lower
@@ -224,15 +225,29 @@ class TargetAttracttorFromGDS(rmp_tree.RMPLeafBase):
         xi_1_ = [par @ dx for par in partial_ms]
         xi_1 = np.concatenate(xi_1_, axis = 1) @ dx
         
+        def calc_xi_2(x, dx):
+            def dxT_M_dx(x):
+                z = dx.T @ M_stretch(x) @ dx
+                return np.ravel(z)
+            
+            x = agnp([[x[0,0], x[1,0], x[2, 0]]])
+            xi_2 = 1/2 * autograd.grad(dxT_M_dx)
+            
+            return xi_2
         
-        def dxT_M_dx(x):
-            z = dx.T @ M_stretch(x) @ dx
-            return np.ravel(z)
         
-        x = agnp([[x[0,0], x[1,0], x[2, 0]]])
-        xi_2 = 1/2 * autograd.grad(dxT_M_dx)
+        xi_2 = calc_xi_2(x, dx)
         
         xi_M = xi_1 - xi_2
+        
+        
+        # 力を計算
+        gamma_p = self.attract_gain
+        gamma_d = self.attract_gain / self.attract_max_speed
+        
+        f_ = -gamma_p * soft_normal(x, dx) - gamma_d * dx
+        carv_ = -np.linalg.inv(M) @ xi_M
+        f = f_ + carv_
         
         return f, M
 
