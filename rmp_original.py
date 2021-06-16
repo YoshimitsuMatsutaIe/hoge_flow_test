@@ -4,6 +4,8 @@
 import numpy as np
 import math
 from math import pi, cos, sin, tan
+import autograd.numpy as agnp
+import autograd
 
 import rmp_tree
 
@@ -180,4 +182,65 @@ class TargetAttracttorFromGDS(rmp_tree.RMPLeafBase):
             (alpha + self.attract_epsilon) * np.eye(3))
         
         
+        # 曲率項xiを計算
+        def M_stretch(x):
+            norm_x = agnp.linalg.norm(x)
+            hat_x = x / norm_x
+            
+            alpha = agnp.exp(-norm_x**2 / (2*self.attract_sigma_alpha**2))
+            gamma = agnp.exp(-norm_x**2 / (2*self.attract_sigma_gamma**2))
+            w = gamma * self.attract_w_upper + (1 - gamma) * self.attract_w_lower
+            
+            def s_alpha(alpha, hat_x):
+                return (1 - agnp.exp(-2*alpha*hat_x)) / (1 + agnp.exp(-2*alpha*hat_x))
+            
+            nabla_x_potential = s_alpha(self.attract_alpha, hat_x) * hat_x
+            
+            M = w * ((1 - alpha) * (nabla_x_potential @ nabla_x_potential.T) + \
+                (alpha + self.attract_epsilon) * agnp.eye(3))
+            
+            return M
+        
+        def partial_mi_s(x):
+            
+            x = agnp([[x[0,0], x[1,0], x[2, 0]]])
+            
+            def m1(x):
+                return M_stretch(x)[:, 0]
+            
+            def m2(x):
+                return M_stretch(x)[:, 1]
+            
+            def m3(x):
+                return M_stretch(x)[:, 2]
+            
+            partial_x_m1 = autograd.jacobian(m1, x)
+            partial_x_m2 = autograd.jacobian(m2, x)
+            partial_x_m3 = autograd.jacobian(m3, x)
+            
+            return [partial_x_m1, partial_x_m2, partial_x_m3]
+        
+        partial_ms = partial_mi_s(x)
+        xi_1_ = [par @ dx for par in partial_ms]
+        xi_1 = np.concatenate(xi_1_, axis = 1) @ dx
+        
+        
+        def dxT_M_dx(x):
+            z = dx.T @ M_stretch(x) @ dx
+            return np.ravel(z)
+        
+        x = agnp([[x[0,0], x[1,0], x[2, 0]]])
+        xi_2 = 1/2 * autograd.grad(dxT_M_dx)
+        
+        xi_M = xi_1 - xi_2
+        
         return f, M
+
+
+
+
+
+
+
+if __name__ == '__main__':
+    pass
