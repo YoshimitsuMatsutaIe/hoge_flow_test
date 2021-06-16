@@ -37,7 +37,7 @@ def D_sigma(q, q_min, q_max):
 
 
 
-class TargetAttractor(rmp_tree.RMPLeafBase):
+class TargetAttractorFromOriginal(rmp_tree.RMPLeafBase):
     """アトラクター"""
     
     def __init__(
@@ -81,7 +81,7 @@ class TargetAttractor(rmp_tree.RMPLeafBase):
         return f, M
 
 
-class ObstacleAvoidance(rmp_tree.RMPLeafBase):
+class CollisionAvoidanceFromOriginal(rmp_tree.RMPLeafBase):
     """障害物回避"""
     
     def __init__(
@@ -130,3 +130,54 @@ class ObstacleAvoidance(rmp_tree.RMPLeafBase):
         
         return f, M
 
+
+
+class TargetAttracttorFromGDS(rmp_tree.RMPLeafBase):
+    """GDSからのやつ"""
+    
+    def __init__(
+        self, name, parent, parent_param,
+        attract_max_speed, attract_gain, attract_alpha_f,
+        attract_sigma_alpha, attract_sigma_gamma,
+        attract_w_upper, attract_w_lower,
+        attract_alpha, attract_epsilon,
+        robot_model,
+    ):
+        self.attract_max_speed = attract_max_speed
+        self.attract_gain = attract_gain
+        self.attract_alpha_f = attract_alpha_f
+        self.attract_sigma_alpha = attract_sigma_alpha
+        self.attract_sigma_gamma = attract_sigma_gamma
+        self.attract_w_upper = attract_w_upper
+        self.attract_w_lower = attract_w_lower
+        self.attract_alpha = attract_alpha
+        self.attract_epsilon = attract_epsilon
+        
+        super().__init__(
+            name = name,
+            parent = parent,
+            J = None,
+            dJ = None,
+            rmp = self.rmp,
+        )
+    
+    
+    def rmp(self, x, dx):
+        
+        norm_x = np.linalg.norm(x)
+        hat_x = x / norm_x
+        
+        alpha = math.exp(-norm_x**2 / (2*self.attract_sigma_alpha**2))
+        gamma = math.exp(-norm_x**2 / (2*self.attract_sigma_gamma**2))
+        w = gamma * self.attract_w_upper + (1 - gamma) * self.attract_w_lower
+        
+        def s_alpha(alpha, hat_x):
+            return (1 - math.exp(-2*alpha*hat_x)) / (1 + math.exp(-2*alpha*hat_x))
+        
+        nabla_x_potential = s_alpha(self.attract_alpha, hat_x) * hat_x
+        
+        M = w * ((1 - alpha) * (nabla_x_potential @ nabla_x_potential.T) + \
+            (alpha + self.attract_epsilon) * np.eye(3))
+        
+        
+        return f, M
