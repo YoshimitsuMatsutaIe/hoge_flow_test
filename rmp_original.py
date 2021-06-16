@@ -10,7 +10,7 @@ import rmp_tree
 def soft_normal(v, alpha):
     """ソフト正規化関数"""
     v_norm = np.linalg.norm(v)
-    softmax = v_norm + 1 / alpha * np.log(1 + np.exp(-2 * alpha * v_norm))
+    softmax = v_norm + 1 / alpha * math.log(1 + math.exp(-2 * alpha * v_norm))
     return v / softmax
 
 def metric_stretch(v, alpha):
@@ -21,7 +21,7 @@ def metric_stretch(v, alpha):
 def basic_metric_H(f, alpha, beta):
     """基本の計量"""
     f_norm = np.linalg.norm(f)
-    f_softmax = f_norm + 1 / alpha * np.log(1 + np.exp(-2 * alpha * f_norm))
+    f_softmax = f_norm + 1 / alpha * math.log(1 + math.exp(-2 * alpha * f_norm))
     s = f / f_softmax
     return beta * s @ s.T + (1 - beta) * np.eye(3)
 
@@ -79,3 +79,54 @@ class TargetAttractor(rmp_tree.RMPLeafBase):
         f = M @ a
         
         return f, M
+
+
+class ObstacleAvoidance(rmp_tree.RMPLeafBase):
+    """障害物回避"""
+    
+    def __init__(
+        self, name, parent, parent_param,
+        obs_scale_rep, obs_scale_damp, obs_ratio, obs_rep_gain, obs_r,
+        robot_model,
+    ):
+        self.obs_scale_rep = obs_scale_rep
+        self.obs_scale_damp = obs_scale_damp
+        self.obs_ratio = obs_ratio
+        self.obs_rep_gain = obs_rep_gain
+        self.obs_r = obs_r
+        
+        # なおしてほしい↓
+        super().__init__(
+            name = name,
+            psi = robot_model.glipper_o,
+            J = robot_model.J_glipper_o,
+            dJ = robot_model.dJ_glipper_o,
+            rmp = self.rmp,
+        )
+    
+    
+    def rmp(self, x, dx):
+        damp_gain = self.obs_rep_gain * self.obs_ratio
+        
+        dis = np.linalg.norm(x)
+        grad_dis = x / dis
+        
+        # 斥力項．障害物に対する位置ベースの反発力？
+        alpha_rep = self.obs_rep_gain * math.exp(-dis / self.obs_scale_rep)  # 斥力の活性化関数
+        a_rep = alpha_rep * grad_dis  # 斥力項
+        
+        # ダンピング項．障害物に向かう速度にペナルティを課す？
+        P_obs = max(0, -(dx).T @ grad_dis) * grad_dis @ grad_dis.T @ dx  # 零空間射影演算子
+        alpha_damp = damp_gain / (dis / self.obs_scale_damp + 1e-7)  # ダンピングの活性化関数
+        a_damp = alpha_damp * P_obs  # ダンピング項
+        #print("a_obs = ", a_rep + a_damp)
+        a =  a_rep + a_damp
+        
+        
+        weight_obs = (dis / self.obs_r) ** 2 - 2 * dis / self.obs_r + 1
+        M = weight_obs * np.eye(3, dtype = np.float32)
+        
+        f = M @ a
+        
+        return f, M
+
