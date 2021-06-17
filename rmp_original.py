@@ -12,13 +12,15 @@ import rmp_tree
 def soft_normal(v, alpha):
     """ソフト正規化関数"""
     v_norm = np.linalg.norm(v)
-    softmax = v_norm + 1 / alpha * math.log(1 + math.exp(-2 * alpha * v_norm))
+    softmax = v_norm + 1 / alpha * np.log(1 + np.exp(-2 * alpha * v_norm))
     return v / softmax
+
 
 def metric_stretch(v, alpha):
     """空間を一方向に伸ばす計量"""
     xi = soft_normal(v, alpha)
     return xi @ xi.T
+
 
 def basic_metric_H(f, alpha, beta):
     """基本の計量"""
@@ -27,9 +29,11 @@ def basic_metric_H(f, alpha, beta):
     s = f / f_softmax
     return beta * s @ s.T + (1 - beta) * np.eye(3)
 
+
 def sigma_L(q, q_min, q_max):
     """アフィン変換andシグモイド変換写像"""
     return (q_max - q_min) * (1 / (1 + np.exp(-q))) + q_min
+
 
 def D_sigma(q, q_min, q_max):
     """ジョイント制限に関する対角ヤコビ行列"""
@@ -155,9 +159,12 @@ class TargetAttracttorFromGDS(rmp_tree.RMPLeafBase):
         self.attract_alpha = attract_alpha
         self.attract_epsilon = attract_epsilon
         
+        # 暫定的
         super().__init__(
             name = name,
             parent = parent,
+            parent_param=None,
+            psi = None,
             J = None,
             dJ = None,
             rmp = self.rmp,
@@ -174,10 +181,10 @@ class TargetAttracttorFromGDS(rmp_tree.RMPLeafBase):
         gamma = math.exp(-norm_x**2 / (2*self.attract_sigma_gamma**2))
         w = gamma * self.attract_w_upper + (1 - gamma) * self.attract_w_lower
         
-        def s_alpha(alpha, hat_x):
-            return (1 - math.exp(-2*alpha*hat_x)) / (1 + math.exp(-2*alpha*hat_x))
+        def s_alpha(alpha, norm_x):
+            return (1 - math.exp(-2*alpha*norm_x)) / (1 + math.exp(-2*alpha*norm_x))
         
-        nabla_x_potential = s_alpha(self.attract_alpha, hat_x) * hat_x
+        nabla_x_potential = s_alpha(self.attract_alpha, norm_x) * hat_x
         
         M = w * ((1 - alpha) * (nabla_x_potential @ nabla_x_potential.T) + \
             (alpha + self.attract_epsilon) * np.eye(3))
@@ -185,27 +192,23 @@ class TargetAttracttorFromGDS(rmp_tree.RMPLeafBase):
         
         # 曲率項xiを計算
         def M_stretch(x):
+            x = x.reshape(3, 1)
             norm_x = agnp.linalg.norm(x)
             hat_x = x / norm_x
-            
             alpha = agnp.exp(-norm_x**2 / (2*self.attract_sigma_alpha**2))
             gamma = agnp.exp(-norm_x**2 / (2*self.attract_sigma_gamma**2))
             w = gamma * self.attract_w_upper + (1 - gamma) * self.attract_w_lower
             
-            def s_alpha(alpha, hat_x):
-                return (1 - agnp.exp(-2*alpha*hat_x)) / (1 + agnp.exp(-2*alpha*hat_x))
+            def s_alpha(alpha, norm_x):
+                return (1 - agnp.exp(-2*alpha*norm_x)) / (1 + agnp.exp(-2*alpha*norm_x))
             
-            nabla_x_potential = s_alpha(self.attract_alpha, hat_x) * hat_x
+            nabla_x_potential = s_alpha(self.attract_alpha, norm_x) * hat_x
             
             M = w * ((1 - alpha) * (nabla_x_potential @ nabla_x_potential.T) + \
-                (alpha + self.attract_epsilon) * agnp.eye(3))
-            
+                (alpha + self.attract_epsilon) * np.eye(3))
             return M
         
         def partial_mi_s(x):
-            
-            x = agnp([[x[0,0], x[1,0], x[2, 0]]])
-            
             def m1(x):
                 return M_stretch(x)[:, 0]
             
@@ -215,38 +218,42 @@ class TargetAttracttorFromGDS(rmp_tree.RMPLeafBase):
             def m3(x):
                 return M_stretch(x)[:, 2]
             
-            partial_x_m1 = autograd.jacobian(m1, x)
-            partial_x_m2 = autograd.jacobian(m2, x)
-            partial_x_m3 = autograd.jacobian(m3, x)
+            partial_x_m1 = autograd.jacobian(m1)(x)
+            partial_x_m2 = autograd.jacobian(m2)(x)
+            partial_x_m3 = autograd.jacobian(m3)(x)
             
             return [partial_x_m1, partial_x_m2, partial_x_m3]
         
-        partial_ms = partial_mi_s(x)
+        partial_ms = partial_mi_s(np.ravel(x))
         xi_1_ = [par @ dx for par in partial_ms]
         xi_1 = np.concatenate(xi_1_, axis = 1) @ dx
+        #print('xi_1=\n', xi_1)
         
         def calc_xi_2(x, dx):
             def dxT_M_dx(x):
                 z = dx.T @ M_stretch(x) @ dx
                 return np.ravel(z)
             
-            x = agnp([[x[0,0], x[1,0], x[2, 0]]])
-            xi_2 = 1/2 * autograd.grad(dxT_M_dx)
+            x = np.ravel(x)
+            xi_2 = 1/2 * autograd.grad(dxT_M_dx)(x)
             
-            return xi_2
+            return xi_2.reshape(3, 1)
         
         
         xi_2 = calc_xi_2(x, dx)
+        #print('xi_2=\n', xi_2)
         
         xi_M = xi_1 - xi_2
-        
+        #print('xi_M=\n', xi_M)
         
         # 力を計算
         gamma_p = self.attract_gain
         gamma_d = self.attract_gain / self.attract_max_speed
         
-        f_ = -gamma_p * soft_normal(x, dx) - gamma_d * dx
-        carv_ = -np.linalg.inv(M) @ xi_M
+        f_ = M @ (-gamma_p * soft_normal(x, dx) - gamma_d * dx)
+        #print(f_)
+        carv_ = xi_M
+        #print(carv_)
         f = f_ + carv_
         
         return f, M
@@ -258,4 +265,25 @@ class TargetAttracttorFromGDS(rmp_tree.RMPLeafBase):
 
 
 if __name__ == '__main__':
-    pass
+    
+    # test
+    hoge = TargetAttracttorFromGDS(
+        name='hoge', parent = None, parent_param=None,
+        attract_max_speed = 0.1, 
+        attract_gain = 1,
+        attract_alpha_f = 0.3,
+        attract_sigma_alpha = 1,
+        attract_sigma_gamma = 1,
+        attract_w_upper = 1,
+        attract_w_lower = 1,
+        attract_alpha = 0.1,
+        attract_epsilon = 1e-5,
+        robot_model = None,
+    )
+    
+    x = np.array([[1., 1., 1.]]).T
+    dx = np.array([[1., 13., 1.]]).T
+    
+    f, M = hoge.rmp(x, dx)
+    print('f=\n', f)
+    print('M=\n', M)

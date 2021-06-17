@@ -1,64 +1,63 @@
-import baxter_utils_3
-import baxter_utils_new
 
+from autograd import grad as nabla
+import autograd
+import autograd.numpy as agnp
 import numpy as np
-import time
+
+# def f(x):
+#     Q = np.array([[3, 2],
+#         [2, 7]])
+#     #return 1./2 * np.dot(x, np.dot(Q, x))
+#     return 1./2 * x @ Q @ x
+
+# x = np.array([1.0, 2.0])
+# print (nabla(f)(x))
 
 
-#q = np.zeros((7, 1))
-q1_init = 0
-q2_init = -31
-q3_init = 0
-q4_init = 43
-q5_init = 0
-q6_init = 72
-q7_init = 0
-q = np.array([[q1_init, q2_init, q3_init, q4_init, q5_init, q6_init, q7_init]]).T * np.pi / 180
+def M_stretch(x):
+    x = x.reshape(3, 1)
+    norm_x = agnp.linalg.norm(x)
+    hat_x = x / norm_x
+    alpha = agnp.exp(-norm_x**2 / (2*1**2))
+    gamma = agnp.exp(-norm_x**2 / (2*1**2))
+    w = gamma * 1 + (1 - gamma) * 1
+    
+    def s_alpha(alpha, norm_x):
+        return (1 - agnp.exp(-2*alpha*norm_x)) / (1 + agnp.exp(-2*alpha*norm_x))
+    
+    nabla_x_potential = s_alpha(1, norm_x) * hat_x
+    M = w * ((1 - alpha) * (nabla_x_potential @ nabla_x_potential.T) + \
+        (alpha + 1) * np.eye(3))
+    return M
 
-# start = time.time()
-# BaxterKinema = baxter_utils_3.BaxterKinematics3(
-#     L = 278e-3,
-#     h = 64e-3,
-#     H = 1104e-3,
-#     L0 = 270.35e-3,
-#     L1 = 69e-3,
-#     L2 = 364.35e-3,
-#     L3 = 69e-3,
-#     L4 = 374.29e-3,
-#     L5 = 10e-3,
-#     L6 = 368.3e-3
-# )
-# # for i in range(10000):
-# #     x = BaxterKinema.origins(q)
-# #     J = BaxterKinema.jacobi_all(q)
-# # print("3 = ", time.time() - start)
-
-# x = BaxterKinema.origins(q)
-# J = BaxterKinema.jacobi_all(q)
-# #print(x)
-# print(J, '\n')
-
-start_2 = time.time()
-BaxterKinema_2 = baxter_utils_new.BaxterKinematicsNew(
-    L = 278e-3,
-    h = 64e-3,
-    H = 1104e-3,
-    L0 = 270.35e-3,
-    L1 = 69e-3,
-    L2 = 364.35e-3,
-    L3 = 69e-3,
-    L4 = 374.29e-3,
-    L5 = 10e-3,
-    L6 = 368.3e-3
-)
-# for i in range(10000):
-#     x_2 = BaxterKinema_2.origins(q)
-#     J_2 = BaxterKinema_2.calc_jacobi(q)
-# print("new = ", time.time() - start_2)
+def partial_mi_s(x):
+    
+    #print(M_stretch(x))
+    #x_ = np([[x[0,0], x[1,0], x[2, 0]]])
+    def m1(x):
+        
+        return M_stretch(x)[:, 0]
+    
+    def m2(x):
+        return M_stretch(x)[:, 1]
+    
+    def m3(x):
+        return M_stretch(x)[:, 2]
+    
+    partial_x_m1 = autograd.jacobian(m1)(x)
+    partial_x_m2 = autograd.jacobian(m2)(x)
+    partial_x_m3 = autograd.jacobian(m3)(x)
+    
+    return [partial_x_m1, partial_x_m2, partial_x_m3]
 
 
-x_2 = BaxterKinema_2.origins(q)
-J_2 = BaxterKinema_2.calc_jacobi(q)
-#print(x_2)
-print(J_2)
 
+x = np.array([1., 1., 1.]).T
+dx = np.array([[1.0, 1.0, 1.0]]).T
+
+partial_ms = partial_mi_s(x)
+
+[print(j) for j in partial_ms]
+
+xi_1_ = [par @ dx for par in partial_ms]
+xi_1 = np.concatenate(xi_1_, axis = 1) @ dx
