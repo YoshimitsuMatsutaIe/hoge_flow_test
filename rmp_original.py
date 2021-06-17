@@ -192,6 +192,7 @@ class TargetAttracttorFromGDS(rmp_tree.RMPLeafBase):
         
         # 曲率項xiを計算
         def M_stretch(x):
+            """autogradで使う用"""
             x = x.reshape(3, 1)
             norm_x = agnp.linalg.norm(x)
             hat_x = x / norm_x
@@ -209,6 +210,7 @@ class TargetAttracttorFromGDS(rmp_tree.RMPLeafBase):
             return M
         
         def partial_mi_s(x):
+            """autogradで面倒な計算をやる"""
             def m1(x):
                 return M_stretch(x)[:, 0]
             
@@ -260,7 +262,13 @@ class TargetAttracttorFromGDS(rmp_tree.RMPLeafBase):
 
 
 
-
+class CollisionAvoidanceFromGDS(rmp_tree.RMPLeafBase):
+    """GDSを使った衝突回避RMP"""
+    
+    def __init__(
+        self,
+    ):
+        
 
 
 
