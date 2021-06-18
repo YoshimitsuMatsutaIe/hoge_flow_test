@@ -398,7 +398,7 @@ class JointLimitAvoidanceFromGDS(rmp_tree.RMPLeafBase):
                         (1-sigma) * ((1-alpha)*ddii)
         
         xi_A_ii = [1/2 * dAiidqi(i, q[i,0], dq[i,0]) * dq[i,0]**2 for i in range(q.shape[0])]
-        xi_A = np.diag(xi_A_ii)
+        xi_A = np.array([xi_A_ii]).T
         ddq = A @ (self.jl_eta_p * (-q) - self.jl_eta_d * dq) - xi_A
         
         return ddq, A
@@ -462,6 +462,7 @@ def test_JointLimitAvoidanceFromGDS():
     f, M = hoge.rmp(q, dq)
     print('f=\n', f)
     print('M=\n', M)
+    
     return
 
 
