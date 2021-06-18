@@ -266,9 +266,63 @@ class CollisionAvoidanceFromGDS(rmp_tree.RMPLeafBase):
     """GDSを使った衝突回避RMP"""
     
     def __init__(
-        self,
+        self, name, parent, parent_param,
+        obs_rw, obs_sigma, obs_alpha,
+        
     ):
         
+        self.obs_rw = obs_rw
+        self.obs_sigma = obs_sigma
+        self.obs_alpha = obs_alpha
+        
+        super.__init__(
+            name = name,
+            parent = parent,
+            parent_param=None,
+            psi = None,
+            J = None,
+            dJ = None,
+            rmp = self.rmp,
+        )
+    
+    
+    def rmp(self, x, dx):
+        """1d"""
+        
+        def w(s):
+            z = max(self.obs_rw - s, 0)
+            return z**2 / s
+        
+        def u(ds):
+            if ds < 0:
+                return 1 - np.exp(-ds**2 / (2 * self.obs_sigma**2))
+            else:
+                return 0
+        
+        def dw(s):
+            if s < self.obs_rw:
+                return -(self.obs_rw - s)**2 / s**2 - 2*(self.obs_rw - s) / s
+            else:
+                return 0
+        
+        def du(ds):
+            if ds < 0:
+                return -ds**3 / (2*self.obs_sigma**4) * np.exp(-ds**2 / (2*self.obs_sigma**2))
+            else:
+                return 0
+        
+        def grad_potential(s):
+            return self.obs_alpha * w(s) * dw(s)
+        
+        # 慣性行列
+        M = w(x) * (u(dx) + 1/2 * dx * du(dx))
+        
+        # 力
+        xi = 1/2 * u(dx) * dw(x) * dx**2
+        #grad_tilda_potential = 1/w(x) * grad_potential(x)
+        f = -grad_potential(x) - xi
+        
+        return f, M
 
 
 
