@@ -138,7 +138,7 @@ class CollisionAvoidanceFromOriginal(rmp_tree.RMPLeafBase):
 
 
 
-class TargetAttracttorFromGDS(rmp_tree.RMPLeafBase):
+class TargetAtracttorFromGDS(rmp_tree.RMPLeafBase):
     """GDSからのやつ"""
     
     def __init__(
@@ -275,7 +275,7 @@ class CollisionAvoidanceFromGDS(rmp_tree.RMPLeafBase):
         self.obs_sigma = obs_sigma
         self.obs_alpha = obs_alpha
         
-        super.__init__(
+        super().__init__(
             name = name,
             parent = parent,
             parent_param=None,
@@ -319,17 +319,17 @@ class CollisionAvoidanceFromGDS(rmp_tree.RMPLeafBase):
         
         # 力
         xi = 1/2 * u(dx) * dw(x) * dx**2
-        #grad_tilda_potential = 1/w(x) * grad_potential(x)
+        #grad_tilda_potential = 1/w(x) * grad_potential(x)  # fのときw消えるから無意味
         f = -grad_potential(x) - xi
         
         return f, M
 
 
 
-if __name__ == '__main__':
-    
-    # test
-    hoge = TargetAttracttorFromGDS(
+# テスト
+def test_TaregetAtracttorFromGDS():
+    """test"""
+    hoge = TargetAtracttorFromGDS(
         name='hoge', parent = None, parent_param=None,
         attract_max_speed = 0.1, 
         attract_gain = 1,
@@ -349,3 +349,25 @@ if __name__ == '__main__':
     f, M = hoge.rmp(x, dx)
     print('f=\n', f)
     print('M=\n', M)
+    return
+
+
+def test_CollisionAvoidanceFromGDS():
+    hoge = CollisionAvoidanceFromGDS(
+        name='hoge', parent = None, parent_param=None,
+        obs_rw = 1,
+        obs_sigma=1,
+        obs_alpha=1,
+    )
+    
+    x = 0.1
+    dx = -0.5
+    
+    f, M = hoge.rmp(x, dx)
+    print('f=\n', f)
+    print('M=\n', M)
+    return
+
+
+if __name__ == '__main__':
+    test_CollisionAvoidanceFromGDS()
