@@ -325,6 +325,84 @@ class CollisionAvoidanceFromGDS(rmp_tree.RMPLeafBase):
         return f, M
 
 
+class JointLimitAvoidanceFromGDS(rmp_tree.RMPLeafBase):
+    """ジョイント制限"""
+    
+    def __init__(
+        self, name, parent, parent_param,
+        jl_c, jl_lambda, jl_upper, jl_lower, jl_eta_p, jl_eta_d,
+    ):
+        
+        self.jl_c = jl_c
+        self.jl_lambda = jl_lambda
+        self.jl_upper = jl_upper
+        self.jl_lower = jl_lower
+        self.jl_eta_p = jl_eta_p
+        self.jl_eta_d = jl_eta_d
+        
+        super().__init__(
+            name = name,
+            parent = parent,
+            parent_param=None,
+            psi = None,
+            J = None,
+            dJ = None,
+            rmp = self.rmp,
+        )
+    
+    
+    def rmp(self, q, dq):
+        
+        # 速度依存計量を計算
+        def sigma_i(u):
+            return 1 / (1 + np.exp(-u))
+        
+        def d_ii(i, u):
+            return (self.jl_upper[i] - self.jl_lower[i]) * (1 + np.exp(-u))**(-2) * np.exp(-u)
+        
+        def alpha_i(du):
+            return 1 / (1 + np.exp(-self.jl_c * du))
+        
+        def tilda_dii(i, u, du):
+            dii = d_ii(i, u)
+            sigma = sigma_i(u)
+            alpha = alpha_i(du)
+            return sigma * (alpha*dii + (1-alpha)) + (1-sigma) * ((1-alpha)*dii + alpha)
+        
+        def tilda_D_sigma(q, dq):
+            Dii = [tilda_dii(i, q[i, 0], dq[i, 0]) for i in range(q.shape[0])]
+            return np.diag(Dii)
+        
+        inv_tilda_D_sigma = np.linalg.inv(tilda_D_sigma(q, dq))
+        A = self.jl_lambda * np.linalg.matrix_power(inv_tilda_D_sigma, 2)
+        
+        
+        # 力を計算
+        def dsigma_idq_i(u):
+            return (1 + np.exp(-u))**(-2) * np.exp(-u)
+        
+        def dd_iidq_i(i, u):
+            return (self.jl_upper[i] - self.jl_lower[i]) * \
+                (2 * (1 + np.exp(-u))**(-3) * np.exp(-2*u) + \
+                    (1 + np.exp(-u))**(-2) * -np.exp(-u))
+        
+        def dAiidqi(i, u, du):
+            dii = d_ii(i, u)
+            sigma = sigma_i(u)
+            alpha = alpha_i(du)
+            dsigma = dsigma_idq_i(u)
+            ddii = dd_iidq_i(i, u)
+            return dsigma * (alpha*dii + (1-alpha)) + \
+                sigma * (alpha*ddii) + \
+                    -dsigma * ((1-alpha)*dii + alpha) + \
+                        (1-sigma) * ((1-alpha)*ddii)
+        
+        xi_A_ii = [1/2 * dAiidqi(i, q[i,0], dq[i,0]) * dq[i,0]**2 for i in range(q.shape[0])]
+        xi_A = np.diag(xi_A_ii)
+        ddq = A @ (self.jl_eta_p * (-q) - self.jl_eta_d * dq) - xi_A
+        
+        return ddq, A
+
 
 # テスト
 def test_TaregetAtracttorFromGDS():
@@ -369,5 +447,26 @@ def test_CollisionAvoidanceFromGDS():
     return
 
 
+def test_JointLimitAvoidanceFromGDS():
+    jl_upper = [pi] * 7
+    jl_lower = [-pi] * 7
+    hoge = JointLimitAvoidanceFromGDS(
+        name='hoge', parent = None, parent_param=None,
+        jl_c = 1, jl_lambda = 1, jl_upper = jl_upper, jl_lower= jl_lower,
+        jl_eta_p=1, jl_eta_d=1,
+    )
+    
+    q = np.array([[0, 0, 0, 0, 0, 0, 0]]).T
+    dq = np.array([[0, 0, 0, 0, 0, 0, 0]]).T
+    
+    f, M = hoge.rmp(q, dq)
+    print('f=\n', f)
+    print('M=\n', M)
+    return
+
+
+
 if __name__ == '__main__':
-    test_CollisionAvoidanceFromGDS()
+    #test_CollisionAvoidanceFromGDS()
+    
+    test_JointLimitAvoidanceFromGDS()
