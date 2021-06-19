@@ -38,70 +38,30 @@ class BaxterKinematics3:
         """
         q = np.ravel(q).tolist()
         
+        def homo_transf_matrix(alpha, a, d, theta):
+            """同次変換行列(DH記法)
+            """
+            return np.array([
+                [cos(theta), -sin(theta), 0, a],
+                [sin(theta)*cos(alpha), cos(theta)*cos(alpha), -sin(alpha), -d*sin(alpha)],
+                [sin(theta)*sin(alpha), cos(theta)*sin(alpha), -cos(alpha), d*cos(alpha)],
+                [0, 0, 0, 1],
+                ])
         
-        # 個別
-        self.T_i_j = [
-            np.array([
-                [cos(pi/4), sin(pi/4), 0, self.L],
-                [-sin(pi/4), cos(pi/4), 0, -self.h],
-                [0, 0, 1, self.H],
-                [0, 0, 0, 1],
-            ]),
-            np.array([
-                [1, 0, 0, 0],
-                [0, 1, 0, 0],
-                [0, 0, 1, self.L0],
-                [0, 0, 0, 1],
-            ]),
-            np.array([
-                [cos(q[1]), -sin(q[1]), 0, 0],
-                [sin(q[1]), cos(q[1]), 0, 0],
-                [0, 0, 1, 0],
-                [0, 0, 0, 1],
-            ]),
-            np.array([
-                [-sin(q[2]), -cos(q[2]), 0, self.L1],
-                [0, 0, 1, 0],
-                [-cos(q[2]), sin(q[2]), 0, 0],
-                [0, 0, 0, 1],
-            ]),
-            np.array([
-                [cos(q[3]), -sin(q[3]), 0, 0],
-                [0, 0, -1, -self.L2],
-                [sin(q[3]), cos(q[3]), 0, 0],
-                [0, 0, 0, 1],
-            ]),
-            np.array([
-                [cos(q[4]), -sin(q[4]), 0, self.L3],
-                [0, 0, 1, 0],
-                [-sin(q[4]), -cos(q[4]), 0, 0],
-                [0, 0, 0, 1],
-            ]),
-            np.array([
-                [cos(q[5]), -sin(q[5]), 0, 0],
-                [0, 0, -1, -self.L4],
-                [sin(q[5]), cos(q[5]), 0, 0],
-                [0, 0, 0, 1],
-            ]),
-            np.array([
-                [cos(q[6]), -sin(q[6]), 0, self.L5],
-                [0, 0, 1, 0],
-                [-sin(q[6]), -cos(q[6]), 0, 0],
-                [0, 0, 0, 1],
-            ]),
-            np.array([
-                [cos(q[7]), -sin(q[7]), 0, 0],
-                [0, 0, -1, 0],
-                [sin(q[7]), cos(q[7]), 0, 0],
-                [0, 0, 0, 1],
-            ]),
-            np.array([
-                [1, 0, 0, 0],
-                [0, 1, 0, 0],
-                [0, 0, 1, self.L6],
-                [0, 0, 0, 1],
-            ]),
-        ]  # 同次変換行列のリスト．0から順にT_Wo_BL, T_BL_0, T_0_1, ...
+        DH_params = [
+            (0, self.L, self.H, pi/4),
+            (0, 0, self.L0, 0),
+            (0, 0, 0, q[0]),
+            (-pi/2, self.L1, 0, q[1]+pi/2),
+            (pi/2, 0, self.L2, q[2]),
+            (-pi/2, self.L3, 0, q[3]),
+            (pi/2, 0, self.L4, q[4]),
+            (-pi/2, self.L5, 0, q[5]),
+            (pi/2, 0, 0, q[6]),
+        ]
+        
+        # 同次変換行列のリスト．0から順にT_Wo_BL, T_BL_0, T_0_1, ...
+        self.T_i_j = [homo_transf_matrix(param) for param in DH_params]
         
         self.T_Wo_j = []  # 同次変換行列のリスト．0から順にT_Wo_BL, T_Wo_0, T_Wo_1, ...
         for i, T in enumerate(self.T_i_j):
@@ -112,6 +72,9 @@ class BaxterKinematics3:
         
         return
     
+    
+    def o(self, q):
+        
     
     def origins(self, q):
         """世界座標系から見た局所座標系の原点座標をまとめて計算"""
