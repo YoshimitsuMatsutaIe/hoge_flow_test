@@ -4,9 +4,9 @@
 
 import numpy as np
 from math import cos, sin, tan, pi, sqrt
+import time
 
-
-class BaxterKinematics3:
+class Kinematics:
     """ローカル座標系の原点，ヤコビ行列等を計算
     ・ちょっとはやい
     """
@@ -49,8 +49,7 @@ class BaxterKinematics3:
                 ])
         
         DH_params = [
-            (0, self.L, self.H, pi/4),
-            (0, 0, self.L0, 0),
+            (0, 0, self.L0, 0),  # T_BL_0
             (0, 0, 0, q[0]),
             (-pi/2, self.L1, 0, q[1]+pi/2),
             (pi/2, 0, self.L2, q[2]),
@@ -60,8 +59,19 @@ class BaxterKinematics3:
             (pi/2, 0, 0, q[6]),
         ]
         
+        def T_Wo_BL():
+            """これだけDHパラメータわからん"""
+            return np.array([
+                [cos(pi/4), sin(pi/4), 0, self.L],
+                [-sin(pi/4), cos(pi/4), 0, -self.h],
+                [0, 0, 1, self.H],
+                [0, 0, 0, 1],
+            ])
+        
         # 同次変換行列のリスト．0から順にT_Wo_BL, T_BL_0, T_0_1, ...
-        self.T_i_j = [homo_transf_matrix(param) for param in DH_params]
+        self.T_i_j = [T_Wo_BL()] + [homo_transf_matrix(*param) for param in DH_params]
+        
+        #print(self.T_i_j)
         
         self.T_Wo_j = []  # 同次変換行列のリスト．0から順にT_Wo_BL, T_Wo_0, T_Wo_1, ...
         for i, T in enumerate(self.T_i_j):
@@ -70,83 +80,20 @@ class BaxterKinematics3:
             else:
                 self.T_Wo_j.append(self.T_Wo_j[i-1] @ T)
         
+        #print(self.T_Wo_j)
+        
         return
     
     
-    def o(self, q):
+    def o(self,):
+        """基底"""
         
+        o_0 = [np.zeros((3, 1))]
+        o_1_ = [T[0:3, 3:4] for T in self.T_Wo_j]
+        os = o_0 + o_1_
+        
+        return os
     
-    def origins(self, q):
-        """世界座標系から見た局所座標系の原点座標をまとめて計算"""
-        q = np.ravel(q).tolist()
-        o_Wo = np.array([
-            [0],
-            [0],
-            [0]
-            ])
-        
-        o_BL = np.array([
-            [self.L],
-            [-self.h],
-            [self.H]
-            ])
-        
-        o_0 = np.array([
-            [self.L],
-            [-self.h],
-            [self.H + self.L0]
-            ])
-        
-        o_1 = np.array([
-            [self.L],
-            [-self.h],
-            [self.H + self.L0]
-            ])
-        
-        o_2 = np.array([
-            [self.L + cos(pi/4)*self.L1*sin(q[0]) + cos(pi/4)*self.L1*cos(q[0])],
-            [cos(pi/4)*self.L1*sin(q[0]) - cos(pi/4)*self.L1*cos(q[0]) - self.h],
-            [self.H + self.L0]
-            ])
-        
-        o_3 = np.array([
-            [self.L + cos(pi/4)*self.L1*sin(q[0]) + cos(pi/4)*self.L1*cos(q[0]) + cos(pi/4)*self.L2*sin(q[0])*cos(q[1]) + cos(pi/4)*self.L2*cos(q[0])*cos(q[1])],
-            [cos(pi/4)*self.L1*sin(q[0]) - cos(pi/4)*self.L1*cos(q[0]) + cos(pi/4)*self.L2*sin(q[0])*cos(q[1]) - cos(pi/4)*self.L2*cos(q[0])*cos(q[1]) - self.h],
-            [self.H + self.L0 - self.L2*sin(q[1])]
-            ])
-        
-        o_4 = np.array([
-            [self.L + cos(pi/4)*self.L1*sin(q[0]) + cos(pi/4)*self.L1*cos(q[0]) + cos(pi/4)*self.L2*sin(q[0])*cos(q[1]) + cos(pi/4)*self.L2*cos(q[0])*cos(q[1]) + cos(pi/4)*self.L3*(-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2])) + cos(pi/4)*self.L3*(-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0]))],
-            [cos(pi/4)*self.L1*sin(q[0]) - cos(pi/4)*self.L1*cos(q[0]) + cos(pi/4)*self.L2*sin(q[0])*cos(q[1]) - cos(pi/4)*self.L2*cos(q[0])*cos(q[1]) - cos(pi/4)*self.L3*(-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2])) + cos(pi/4)*self.L3*(-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0])) - self.h],
-            [self.H + self.L0 - self.L2*sin(q[1]) - self.L3*cos(q[1])*cos(q[2])]
-            ])
-        
-        o_5 = np.array([
-            [self.L + cos(pi/4)*self.L1*sin(q[0]) + cos(pi/4)*self.L1*cos(q[0]) + cos(pi/4)*self.L2*sin(q[0])*cos(q[1]) + cos(pi/4)*self.L2*cos(q[0])*cos(q[1]) + cos(pi/4)*self.L3*(-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2])) + cos(pi/4)*self.L3*(-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0])) - cos(pi/4)*self.L4*(-(-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2]))*sin(q[3]) - cos(q[0])*cos(q[1])*cos(q[3])) - cos(pi/4)*self.L4*(-(-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0]))*sin(q[3]) - sin(q[0])*cos(q[1])*cos(q[3]))],
-            [cos(pi/4)*self.L1*sin(q[0]) - cos(pi/4)*self.L1*cos(q[0]) + cos(pi/4)*self.L2*sin(q[0])*cos(q[1]) - cos(pi/4)*self.L2*cos(q[0])*cos(q[1]) - cos(pi/4)*self.L3*(-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2])) + cos(pi/4)*self.L3*(-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0])) + cos(pi/4)*self.L4*(-(-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2]))*sin(q[3]) - cos(q[0])*cos(q[1])*cos(q[3])) - cos(pi/4)*self.L4*(-(-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0]))*sin(q[3]) - sin(q[0])*cos(q[1])*cos(q[3])) - self.h],
-            [self.H + self.L0 - self.L2*sin(q[1]) - self.L3*cos(q[1])*cos(q[2]) - self.L4*(sin(q[1])*cos(q[3]) + sin(q[3])*cos(q[1])*cos(q[2]))]
-            ])
-        
-        o_6 = np.array([
-            
-            [self.L + cos(pi/4)*self.L1*sin(q[0]) + cos(pi/4)*self.L1*cos(q[0]) + cos(pi/4)*self.L2*sin(q[0])*cos(q[1]) + cos(pi/4)*self.L2*cos(q[0])*cos(q[1]) + cos(pi/4)*self.L3*(-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2])) + cos(pi/4)*self.L3*(-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0])) - cos(pi/4)*self.L4*(-(-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2]))*sin(q[3]) - cos(q[0])*cos(q[1])*cos(q[3])) - cos(pi/4)*self.L4*(-(-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0]))*sin(q[3]) - sin(q[0])*cos(q[1])*cos(q[3])) + cos(pi/4)*self.L5*(((-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2]))*cos(q[3]) - sin(q[3])*cos(q[0])*cos(q[1]))*cos(q[4]) + (-sin(q[0])*cos(q[2]) + sin(q[1])*sin(q[2])*cos(q[0]))*sin(q[4])) + cos(pi/4)*self.L5*(((-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0]))*cos(q[3]) - sin(q[0])*sin(q[3])*cos(q[1]))*cos(q[4]) + (sin(q[0])*sin(q[1])*sin(q[2]) + cos(q[0])*cos(q[2]))*sin(q[4]))],
-            [cos(pi/4)*self.L1*sin(q[0]) - cos(pi/4)*self.L1*cos(q[0]) + cos(pi/4)*self.L2*sin(q[0])*cos(q[1]) - cos(pi/4)*self.L2*cos(q[0])*cos(q[1]) - cos(pi/4)*self.L3*(-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2])) + cos(pi/4)*self.L3*(-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0])) + cos(pi/4)*self.L4*(-(-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2]))*sin(q[3]) - cos(q[0])*cos(q[1])*cos(q[3])) - cos(pi/4)*self.L4*(-(-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0]))*sin(q[3]) - sin(q[0])*cos(q[1])*cos(q[3])) - cos(pi/4)*self.L5*(((-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2]))*cos(q[3]) - sin(q[3])*cos(q[0])*cos(q[1]))*cos(q[4]) + (-sin(q[0])*cos(q[2]) + sin(q[1])*sin(q[2])*cos(q[0]))*sin(q[4])) + cos(pi/4)*self.L5*(((-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0]))*cos(q[3]) - sin(q[0])*sin(q[3])*cos(q[1]))*cos(q[4]) + (sin(q[0])*sin(q[1])*sin(q[2]) + cos(q[0])*cos(q[2]))*sin(q[4])) - self.h],
-            [self.H + self.L0 - self.L2*sin(q[1]) - self.L3*cos(q[1])*cos(q[2]) - self.L4*(sin(q[1])*cos(q[3]) + sin(q[3])*cos(q[1])*cos(q[2])) + self.L5*((sin(q[1])*sin(q[3]) - cos(q[1])*cos(q[2])*cos(q[3]))*cos(q[4]) + sin(q[2])*sin(q[4])*cos(q[1]))]
-            ])
-        
-        o_7 = np.array([
-            [self.L + cos(pi/4)*self.L1*sin(q[0]) + cos(pi/4)*self.L1*cos(q[0]) + cos(pi/4)*self.L2*sin(q[0])*cos(q[1]) + cos(pi/4)*self.L2*cos(q[0])*cos(q[1]) + cos(pi/4)*self.L3*(-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2])) + cos(pi/4)*self.L3*(-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0])) - cos(pi/4)*self.L4*(-(-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2]))*sin(q[3]) - cos(q[0])*cos(q[1])*cos(q[3])) - cos(pi/4)*self.L4*(-(-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0]))*sin(q[3]) - sin(q[0])*cos(q[1])*cos(q[3])) + cos(pi/4)*self.L5*(((-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2]))*cos(q[3]) - sin(q[3])*cos(q[0])*cos(q[1]))*cos(q[4]) + (-sin(q[0])*cos(q[2]) + sin(q[1])*sin(q[2])*cos(q[0]))*sin(q[4])) + cos(pi/4)*self.L5*(((-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0]))*cos(q[3]) - sin(q[0])*sin(q[3])*cos(q[1]))*cos(q[4]) + (sin(q[0])*sin(q[1])*sin(q[2]) + cos(q[0])*cos(q[2]))*sin(q[4]))],
-            [cos(pi/4)*self.L1*sin(q[0]) - cos(pi/4)*self.L1*cos(q[0]) + cos(pi/4)*self.L2*sin(q[0])*cos(q[1]) - cos(pi/4)*self.L2*cos(q[0])*cos(q[1]) - cos(pi/4)*self.L3*(-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2])) + cos(pi/4)*self.L3*(-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0])) + cos(pi/4)*self.L4*(-(-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2]))*sin(q[3]) - cos(q[0])*cos(q[1])*cos(q[3])) - cos(pi/4)*self.L4*(-(-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0]))*sin(q[3]) - sin(q[0])*cos(q[1])*cos(q[3])) - cos(pi/4)*self.L5*(((-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2]))*cos(q[3]) - sin(q[3])*cos(q[0])*cos(q[1]))*cos(q[4]) + (-sin(q[0])*cos(q[2]) + sin(q[1])*sin(q[2])*cos(q[0]))*sin(q[4])) + cos(pi/4)*self.L5*(((-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0]))*cos(q[3]) - sin(q[0])*sin(q[3])*cos(q[1]))*cos(q[4]) + (sin(q[0])*sin(q[1])*sin(q[2]) + cos(q[0])*cos(q[2]))*sin(q[4])) - self.h],
-            [self.H + self.L0 - self.L2*sin(q[1]) - self.L3*cos(q[1])*cos(q[2]) - self.L4*(sin(q[1])*cos(q[3]) + sin(q[3])*cos(q[1])*cos(q[2])) + self.L5*((sin(q[1])*sin(q[3]) - cos(q[1])*cos(q[2])*cos(q[3]))*cos(q[4]) + sin(q[2])*sin(q[4])*cos(q[1]))]
-            ])
-
-        o_GL = np.array([
-            [self.L + cos(pi/4)*self.L1*sin(q[0]) + cos(pi/4)*self.L1*cos(q[0]) + cos(pi/4)*self.L2*sin(q[0])*cos(q[1]) + cos(pi/4)*self.L2*cos(q[0])*cos(q[1]) + cos(pi/4)*self.L3*(-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2])) + cos(pi/4)*self.L3*(-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0])) - cos(pi/4)*self.L4*(-(-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2]))*sin(q[3]) - cos(q[0])*cos(q[1])*cos(q[3])) - cos(pi/4)*self.L4*(-(-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0]))*sin(q[3]) - sin(q[0])*cos(q[1])*cos(q[3])) + cos(pi/4)*self.L5*(((-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2]))*cos(q[3]) - sin(q[3])*cos(q[0])*cos(q[1]))*cos(q[4]) + (-sin(q[0])*cos(q[2]) + sin(q[1])*sin(q[2])*cos(q[0]))*sin(q[4])) + cos(pi/4)*self.L5*(((-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0]))*cos(q[3]) - sin(q[0])*sin(q[3])*cos(q[1]))*cos(q[4]) + (sin(q[0])*sin(q[1])*sin(q[2]) + cos(q[0])*cos(q[2]))*sin(q[4])) + self.L6*(cos(pi/4)*(((-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2]))*cos(q[3]) - sin(q[3])*cos(q[0])*cos(q[1]))*cos(q[4]) + (-sin(q[0])*cos(q[2]) + sin(q[1])*sin(q[2])*cos(q[0]))*sin(q[4]))*sin(q[5]) + cos(pi/4)*(((-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0]))*cos(q[3]) - sin(q[0])*sin(q[3])*cos(q[1]))*cos(q[4]) + (sin(q[0])*sin(q[1])*sin(q[2]) + cos(q[0])*cos(q[2]))*sin(q[4]))*sin(q[5]) + cos(pi/4)*((-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2]))*sin(q[3]) + cos(q[0])*cos(q[1])*cos(q[3]))*cos(q[5]) + cos(pi/4)*((-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0]))*sin(q[3]) + sin(q[0])*cos(q[1])*cos(q[3]))*cos(q[5]))],
-            [cos(pi/4)*self.L1*sin(q[0]) - cos(pi/4)*self.L1*cos(q[0]) + cos(pi/4)*self.L2*sin(q[0])*cos(q[1]) - cos(pi/4)*self.L2*cos(q[0])*cos(q[1]) - cos(pi/4)*self.L3*(-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2])) + cos(pi/4)*self.L3*(-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0])) + cos(pi/4)*self.L4*(-(-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2]))*sin(q[3]) - cos(q[0])*cos(q[1])*cos(q[3])) - cos(pi/4)*self.L4*(-(-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0]))*sin(q[3]) - sin(q[0])*cos(q[1])*cos(q[3])) - cos(pi/4)*self.L5*(((-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2]))*cos(q[3]) - sin(q[3])*cos(q[0])*cos(q[1]))*cos(q[4]) + (-sin(q[0])*cos(q[2]) + sin(q[1])*sin(q[2])*cos(q[0]))*sin(q[4])) + cos(pi/4)*self.L5*(((-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0]))*cos(q[3]) - sin(q[0])*sin(q[3])*cos(q[1]))*cos(q[4]) + (sin(q[0])*sin(q[1])*sin(q[2]) + cos(q[0])*cos(q[2]))*sin(q[4])) + self.L6*(-cos(pi/4)*(((-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2]))*cos(q[3]) - sin(q[3])*cos(q[0])*cos(q[1]))*cos(q[4]) + (-sin(q[0])*cos(q[2]) + sin(q[1])*sin(q[2])*cos(q[0]))*sin(q[4]))*sin(q[5]) + cos(pi/4)*(((-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0]))*cos(q[3]) - sin(q[0])*sin(q[3])*cos(q[1]))*cos(q[4]) + (sin(q[0])*sin(q[1])*sin(q[2]) + cos(q[0])*cos(q[2]))*sin(q[4]))*sin(q[5]) - cos(pi/4)*((-sin(q[0])*sin(q[2]) - sin(q[1])*cos(q[0])*cos(q[2]))*sin(q[3]) + cos(q[0])*cos(q[1])*cos(q[3]))*cos(q[5]) + cos(pi/4)*((-sin(q[0])*sin(q[1])*cos(q[2]) + sin(q[2])*cos(q[0]))*sin(q[3]) + sin(q[0])*cos(q[1])*cos(q[3]))*cos(q[5])) - self.h],
-            [self.H + self.L0 - self.L2*sin(q[1]) - self.L3*cos(q[1])*cos(q[2]) - self.L4*(sin(q[1])*cos(q[3]) + sin(q[3])*cos(q[1])*cos(q[2])) + self.L5*((sin(q[1])*sin(q[3]) - cos(q[1])*cos(q[2])*cos(q[3]))*cos(q[4]) + sin(q[2])*sin(q[4])*cos(q[1])) + self.L6*(((sin(q[1])*sin(q[3]) - cos(q[1])*cos(q[2])*cos(q[3]))*cos(q[4]) + sin(q[2])*sin(q[4])*cos(q[1]))*sin(q[5]) + (-sin(q[1])*cos(q[3]) - sin(q[3])*cos(q[1])*cos(q[2]))*cos(q[5]))]
-            ])
-        
-        return [o_Wo, o_BL, o_0, o_1, o_2, o_3, o_4, o_5, o_6, o_7, o_GL]
     
     # ヤコビ行列
     def jacobi_Wo(self, q):
@@ -242,32 +189,22 @@ class BaxterKinematics3:
     
     # ヤコビ行列の時間微分
     def djacobi_Wo(self, q, dq):
-        q[0], q[1], q[2], q[3], q[4], q[5], q[6] = q[0, 0], q[1, 0], q[2, 0], q[3, 0], q[4, 0], q[5, 0], q[6, 0]
-        dq[0], dq[1], dq[2], dq[3], dq[4], dq[5], dq[6] = dq[0, 0], dq[1, 0], dq[2, 0], dq[3, 0], dq[4, 0], dq[5, 0], dq[6, 0]
         z = np.zeros((3, 7))
         return z
     
     def djacobi_BL(self, q, dq):
-        q[0], q[1], q[2], q[3], q[4], q[5], q[6] = q[0, 0], q[1, 0], q[2, 0], q[3, 0], q[4, 0], q[5, 0], q[6, 0]
-        dq[0], dq[1], dq[2], dq[3], dq[4], dq[5], dq[6] = dq[0, 0], dq[1, 0], dq[2, 0], dq[3, 0], dq[4, 0], dq[5, 0], dq[6, 0]
         z = np.zeros((3, 7))
         return z
         
     def djacobi_0(self, q, dq):
-        q[0], q[1], q[2], q[3], q[4], q[5], q[6] = q[0, 0], q[1, 0], q[2, 0], q[3, 0], q[4, 0], q[5, 0], q[6, 0]
-        dq[0], dq[1], dq[2], dq[3], dq[4], dq[5], dq[6] = dq[0, 0], dq[1, 0], dq[2, 0], dq[3, 0], dq[4, 0], dq[5, 0], dq[6, 0]
         z = np.zeros((3, 7))
         return z
         
     def djacobi_1(self, q, dq):
-        q[0], q[1], q[2], q[3], q[4], q[5], q[6] = q[0, 0], q[1, 0], q[2, 0], q[3, 0], q[4, 0], q[5, 0], q[6, 0]
-        dq[0], dq[1], dq[2], dq[3], dq[4], dq[5], dq[6] = dq[0, 0], dq[1, 0], dq[2, 0], dq[3, 0], dq[4, 0], dq[5, 0], dq[6, 0]
         z = np.zeros((3, 7))
         return z
         
     def djacobi_2(self, q, dq):
-        q[0], q[1], q[2], q[3], q[4], q[5], q[6] = q[0, 0], q[1, 0], q[2, 0], q[3, 0], q[4, 0], q[5, 0], q[6, 0]
-        dq[0], dq[1], dq[2], dq[3], dq[4], dq[5], dq[6] = dq[0, 0], dq[1, 0], dq[2, 0], dq[3, 0], dq[4, 0], dq[5, 0], dq[6, 0]
         z = np.array([
             [
                 -cos(pi/4)*self.L1*dq[0]*sin(q[0]) - cos(pi/4)*self.L1*dq[0]*cos(q[0]), 
@@ -300,8 +237,6 @@ class BaxterKinematics3:
         return z
         
     def djacobi_3(self, q, dq):
-        q[0], q[1], q[2], q[3], q[4], q[5], q[6] = q[0, 0], q[1, 0], q[2, 0], q[3, 0], q[4, 0], q[5, 0], q[6, 0]
-        dq[0], dq[1], dq[2], dq[3], dq[4], dq[5], dq[6] = dq[0, 0], dq[1, 0], dq[2, 0], dq[3, 0], dq[4, 0], dq[5, 0], dq[6, 0]
         z = np.array([
             [
                 -cos(pi/4)*self.L1*dq[0]*sin(q[0]) - cos(pi/4)*self.L1*dq[0]*cos(q[0]) - cos(pi/4)*self.L2*dq[0]*sin(q[0])*cos(q[1]) - cos(pi/4)*self.L2*dq[0]*cos(q[0])*cos(q[1]) + cos(pi/4)*self.L2*dq[1]*sin(q[0])*sin(q[1]) - cos(pi/4)*self.L2*dq[1]*sin(q[1])*cos(q[0]), 
@@ -334,8 +269,6 @@ class BaxterKinematics3:
         return z
         
     def djacobi_4(self, q, dq):
-        q[0], q[1], q[2], q[3], q[4], q[5], q[6] = q[0, 0], q[1, 0], q[2, 0], q[3, 0], q[4, 0], q[5, 0], q[6, 0]
-        dq[0], dq[1], dq[2], dq[3], dq[4], dq[5], dq[6] = dq[0, 0], dq[1, 0], dq[2, 0], dq[3, 0], dq[4, 0], dq[5, 0], dq[6, 0]
         z = np.array([
             [
                 -cos(pi/4)*self.L1*dq[0]*sin(q[0]) - cos(pi/4)*self.L1*dq[0]*cos(q[0]) - cos(pi/4)*self.L2*dq[0]*sin(q[0])*cos(q[1]) - cos(pi/4)*self.L2*dq[0]*cos(q[0])*cos(q[1]) + cos(pi/4)*self.L2*dq[1]*sin(q[0])*sin(q[1]) - cos(pi/4)*self.L2*dq[1]*sin(q[1])*cos(q[0]) + cos(pi/4)*self.L3*(dq[0]*sin(q[0])*sin(q[2]) + dq[0]*sin(q[1])*cos(q[0])*cos(q[2]) + dq[1]*sin(q[0])*cos(q[1])*cos(q[2]) - dq[2]*sin(q[0])*sin(q[1])*sin(q[2]) - dq[2]*cos(q[0])*cos(q[2])) + cos(pi/4)*self.L3*(dq[0]*sin(q[0])*sin(q[1])*cos(q[2]) - dq[0]*sin(q[2])*cos(q[0]) - dq[1]*cos(q[0])*cos(q[1])*cos(q[2]) - dq[2]*sin(q[0])*cos(q[2]) + dq[2]*sin(q[1])*sin(q[2])*cos(q[0])), 
@@ -368,8 +301,6 @@ class BaxterKinematics3:
         return z
         
     def djacobi_5(self, q, dq):
-        q[0], q[1], q[2], q[3], q[4], q[5], q[6] = q[0, 0], q[1, 0], q[2, 0], q[3, 0], q[4, 0], q[5, 0], q[6, 0]
-        dq[0], dq[1], dq[2], dq[3], dq[4], dq[5], dq[6] = dq[0, 0], dq[1, 0], dq[2, 0], dq[3, 0], dq[4, 0], dq[5, 0], dq[6, 0]
         z = np.array([
             [
                 cos(pi/4)*sqrt(2)*(-self.L1*dq[0]*sin(q[0] + pi/4) - self.L2*dq[0]*sin(q[0] + pi/4)*cos(q[1]) - self.L2*dq[1]*sin(q[1])*cos(q[0] + pi/4) + self.L3*dq[0]*sin(q[0] + pi/4)*sin(q[1])*cos(q[2]) - self.L3*dq[0]*sin(q[2])*cos(q[0] + pi/4) - self.L3*dq[1]*cos(q[0] + pi/4)*cos(q[1])*cos(q[2]) - self.L3*dq[2]*sin(q[0] + pi/4)*cos(q[2]) + self.L3*dq[2]*sin(q[1])*sin(q[2])*cos(q[0] + pi/4) + self.L4*dq[0]*sin(q[0] + pi/4)*sin(q[1])*sin(q[3])*cos(q[2]) - self.L4*dq[0]*sin(q[0] + pi/4)*cos(q[1])*cos(q[3]) - self.L4*dq[0]*sin(q[2])*sin(q[3])*cos(q[0] + pi/4) - self.L4*dq[1]*sin(q[1])*cos(q[0] + pi/4)*cos(q[3]) - self.L4*dq[1]*sin(q[3])*cos(q[0] + pi/4)*cos(q[1])*cos(q[2]) - self.L4*dq[2]*sin(q[0] + pi/4)*sin(q[3])*cos(q[2]) + self.L4*dq[2]*sin(q[1])*sin(q[2])*sin(q[3])*cos(q[0] + pi/4) - self.L4*dq[3]*sin(q[0] + pi/4)*sin(q[2])*cos(q[3]) - self.L4*dq[3]*sin(q[1])*cos(q[0] + pi/4)*cos(q[2])*cos(q[3]) - self.L4*dq[3]*sin(q[3])*cos(q[0] + pi/4)*cos(q[1])), 
@@ -402,8 +333,6 @@ class BaxterKinematics3:
         return z
         
     def djacobi_6(self, q, dq):
-        q[0], q[1], q[2], q[3], q[4], q[5], q[6] = q[0, 0], q[1, 0], q[2, 0], q[3, 0], q[4, 0], q[5, 0], q[6, 0]
-        dq[0], dq[1], dq[2], dq[3], dq[4], dq[5], dq[6] = dq[0, 0], dq[1, 0], dq[2, 0], dq[3, 0], dq[4, 0], dq[5, 0], dq[6, 0]
         z = np.array([
             [
                 cos(pi/4)*sqrt(2)*(-self.L1*dq[0]*sin(q[0] + pi/4) - self.L2*dq[0]*sin(q[0] + pi/4)*cos(q[1]) - self.L2*dq[1]*sin(q[1])*cos(q[0] + pi/4) + self.L3*dq[0]*sin(q[0] + pi/4)*sin(q[1])*cos(q[2]) - self.L3*dq[0]*sin(q[2])*cos(q[0] + pi/4) - self.L3*dq[1]*cos(q[0] + pi/4)*cos(q[1])*cos(q[2]) - self.L3*dq[2]*sin(q[0] + pi/4)*cos(q[2]) + self.L3*dq[2]*sin(q[1])*sin(q[2])*cos(q[0] + pi/4) + self.L4*dq[0]*sin(q[0] + pi/4)*sin(q[1])*sin(q[3])*cos(q[2]) - self.L4*dq[0]*sin(q[0] + pi/4)*cos(q[1])*cos(q[3]) - self.L4*dq[0]*sin(q[2])*sin(q[3])*cos(q[0] + pi/4) - self.L4*dq[1]*sin(q[1])*cos(q[0] + pi/4)*cos(q[3]) - self.L4*dq[1]*sin(q[3])*cos(q[0] + pi/4)*cos(q[1])*cos(q[2]) - self.L4*dq[2]*sin(q[0] + pi/4)*sin(q[3])*cos(q[2]) + self.L4*dq[2]*sin(q[1])*sin(q[2])*sin(q[3])*cos(q[0] + pi/4) - self.L4*dq[3]*sin(q[0] + pi/4)*sin(q[2])*cos(q[3]) - self.L4*dq[3]*sin(q[1])*cos(q[0] + pi/4)*cos(q[2])*cos(q[3]) - self.L4*dq[3]*sin(q[3])*cos(q[0] + pi/4)*cos(q[1]) - self.L5*dq[0]*sin(q[0] + pi/4)*sin(q[1])*sin(q[2])*sin(q[4]) + self.L5*dq[0]*sin(q[0] + pi/4)*sin(q[1])*cos(q[2])*cos(q[3])*cos(q[4]) + self.L5*dq[0]*sin(q[0] + pi/4)*sin(q[3])*cos(q[1])*cos(q[4]) - self.L5*dq[0]*sin(q[2])*cos(q[0] + pi/4)*cos(q[3])*cos(q[4]) - self.L5*dq[0]*sin(q[4])*cos(q[0] + pi/4)*cos(q[2]) + self.L5*dq[1]*sin(q[1])*sin(q[3])*cos(q[0] + pi/4)*cos(q[4]) + self.L5*dq[1]*sin(q[2])*sin(q[4])*cos(q[0] + pi/4)*cos(q[1]) - self.L5*dq[1]*cos(q[0] + pi/4)*cos(q[1])*cos(q[2])*cos(q[3])*cos(q[4]) + self.L5*dq[2]*sin(q[0] + pi/4)*sin(q[2])*sin(q[4]) - self.L5*dq[2]*sin(q[0] + pi/4)*cos(q[2])*cos(q[3])*cos(q[4]) + self.L5*dq[2]*sin(q[1])*sin(q[2])*cos(q[0] + pi/4)*cos(q[3])*cos(q[4]) + self.L5*dq[2]*sin(q[1])*sin(q[4])*cos(q[0] + pi/4)*cos(q[2]) + self.L5*dq[3]*sin(q[0] + pi/4)*sin(q[2])*sin(q[3])*cos(q[4]) + self.L5*dq[3]*sin(q[1])*sin(q[3])*cos(q[0] + pi/4)*cos(q[2])*cos(q[4]) - self.L5*dq[3]*cos(q[0] + pi/4)*cos(q[1])*cos(q[3])*cos(q[4]) + self.L5*dq[4]*sin(q[0] + pi/4)*sin(q[2])*sin(q[4])*cos(q[3]) - self.L5*dq[4]*sin(q[0] + pi/4)*cos(q[2])*cos(q[4]) + self.L5*dq[4]*sin(q[1])*sin(q[2])*cos(q[0] + pi/4)*cos(q[4]) + self.L5*dq[4]*sin(q[1])*sin(q[4])*cos(q[0] + pi/4)*cos(q[2])*cos(q[3]) + self.L5*dq[4]*sin(q[3])*sin(q[4])*cos(q[0] + pi/4)*cos(q[1])),
@@ -436,8 +365,6 @@ class BaxterKinematics3:
         return z
         
     def djacobi_7(self, q, dq):
-        q[0], q[1], q[2], q[3], q[4], q[5], q[6] = q[0, 0], q[1, 0], q[2, 0], q[3, 0], q[4, 0], q[5, 0], q[6, 0]
-        dq[0], dq[1], dq[2], dq[3], dq[4], dq[5], dq[6] = dq[0, 0], dq[1, 0], dq[2, 0], dq[3, 0], dq[4, 0], dq[5, 0], dq[6, 0]
         z = np.array([
             [
                 cos(pi/4)*sqrt(2)*(-self.L1*dq[0]*sin(q[0] + pi/4) - self.L2*dq[0]*sin(q[0] + pi/4)*cos(q[1]) - self.L2*dq[1]*sin(q[1])*cos(q[0] + pi/4) + self.L3*dq[0]*sin(q[0] + pi/4)*sin(q[1])*cos(q[2]) - self.L3*dq[0]*sin(q[2])*cos(q[0] + pi/4) - self.L3*dq[1]*cos(q[0] + pi/4)*cos(q[1])*cos(q[2]) - self.L3*dq[2]*sin(q[0] + pi/4)*cos(q[2]) + self.L3*dq[2]*sin(q[1])*sin(q[2])*cos(q[0] + pi/4) + self.L4*dq[0]*sin(q[0] + pi/4)*sin(q[1])*sin(q[3])*cos(q[2]) - self.L4*dq[0]*sin(q[0] + pi/4)*cos(q[1])*cos(q[3]) - self.L4*dq[0]*sin(q[2])*sin(q[3])*cos(q[0] + pi/4) - self.L4*dq[1]*sin(q[1])*cos(q[0] + pi/4)*cos(q[3]) - self.L4*dq[1]*sin(q[3])*cos(q[0] + pi/4)*cos(q[1])*cos(q[2]) - self.L4*dq[2]*sin(q[0] + pi/4)*sin(q[3])*cos(q[2]) + self.L4*dq[2]*sin(q[1])*sin(q[2])*sin(q[3])*cos(q[0] + pi/4) - self.L4*dq[3]*sin(q[0] + pi/4)*sin(q[2])*cos(q[3]) - self.L4*dq[3]*sin(q[1])*cos(q[0] + pi/4)*cos(q[2])*cos(q[3]) - self.L4*dq[3]*sin(q[3])*cos(q[0] + pi/4)*cos(q[1]) - self.L5*dq[0]*sin(q[0] + pi/4)*sin(q[1])*sin(q[2])*sin(q[4]) + self.L5*dq[0]*sin(q[0] + pi/4)*sin(q[1])*cos(q[2])*cos(q[3])*cos(q[4]) + self.L5*dq[0]*sin(q[0] + pi/4)*sin(q[3])*cos(q[1])*cos(q[4]) - self.L5*dq[0]*sin(q[2])*cos(q[0] + pi/4)*cos(q[3])*cos(q[4]) - self.L5*dq[0]*sin(q[4])*cos(q[0] + pi/4)*cos(q[2]) + self.L5*dq[1]*sin(q[1])*sin(q[3])*cos(q[0] + pi/4)*cos(q[4]) + self.L5*dq[1]*sin(q[2])*sin(q[4])*cos(q[0] + pi/4)*cos(q[1]) - self.L5*dq[1]*cos(q[0] + pi/4)*cos(q[1])*cos(q[2])*cos(q[3])*cos(q[4]) + self.L5*dq[2]*sin(q[0] + pi/4)*sin(q[2])*sin(q[4]) - self.L5*dq[2]*sin(q[0] + pi/4)*cos(q[2])*cos(q[3])*cos(q[4]) + self.L5*dq[2]*sin(q[1])*sin(q[2])*cos(q[0] + pi/4)*cos(q[3])*cos(q[4]) + self.L5*dq[2]*sin(q[1])*sin(q[4])*cos(q[0] + pi/4)*cos(q[2]) + self.L5*dq[3]*sin(q[0] + pi/4)*sin(q[2])*sin(q[3])*cos(q[4]) + self.L5*dq[3]*sin(q[1])*sin(q[3])*cos(q[0] + pi/4)*cos(q[2])*cos(q[4]) - self.L5*dq[3]*cos(q[0] + pi/4)*cos(q[1])*cos(q[3])*cos(q[4]) + self.L5*dq[4]*sin(q[0] + pi/4)*sin(q[2])*sin(q[4])*cos(q[3]) - self.L5*dq[4]*sin(q[0] + pi/4)*cos(q[2])*cos(q[4]) + self.L5*dq[4]*sin(q[1])*sin(q[2])*cos(q[0] + pi/4)*cos(q[4]) + self.L5*dq[4]*sin(q[1])*sin(q[4])*cos(q[0] + pi/4)*cos(q[2])*cos(q[3]) + self.L5*dq[4]*sin(q[3])*sin(q[4])*cos(q[0] + pi/4)*cos(q[1])),
@@ -470,8 +397,6 @@ class BaxterKinematics3:
         return z
         
     def djacobi_GL(self, q, dq):
-        q[0], q[1], q[2], q[3], q[4], q[5], q[6] = q[0, 0], q[1, 0], q[2, 0], q[3, 0], q[4, 0], q[5, 0], q[6, 0]
-        dq[0], dq[1], dq[2], dq[3], dq[4], dq[5], dq[6] = dq[0, 0], dq[1, 0], dq[2, 0], dq[3, 0], dq[4, 0], dq[5, 0], dq[6, 0]
         z = np.array([
             [
                 cos(pi/4)*sqrt(2)*(-self.L1*dq[0]*sin(q[0] + pi/4) - self.L2*dq[0]*sin(q[0] + pi/4)*cos(q[1]) - self.L2*dq[1]*sin(q[1])*cos(q[0] + pi/4) + self.L3*dq[0]*sin(q[0] + pi/4)*sin(q[1])*cos(q[2]) - self.L3*dq[0]*sin(q[2])*cos(q[0] + pi/4) - self.L3*dq[1]*cos(q[0] + pi/4)*cos(q[1])*cos(q[2]) - self.L3*dq[2]*sin(q[0] + pi/4)*cos(q[2]) + self.L3*dq[2]*sin(q[1])*sin(q[2])*cos(q[0] + pi/4) + self.L4*dq[0]*sin(q[0] + pi/4)*sin(q[1])*sin(q[3])*cos(q[2]) - self.L4*dq[0]*sin(q[0] + pi/4)*cos(q[1])*cos(q[3]) - self.L4*dq[0]*sin(q[2])*sin(q[3])*cos(q[0] + pi/4) - self.L4*dq[1]*sin(q[1])*cos(q[0] + pi/4)*cos(q[3]) - self.L4*dq[1]*sin(q[3])*cos(q[0] + pi/4)*cos(q[1])*cos(q[2]) - self.L4*dq[2]*sin(q[0] + pi/4)*sin(q[3])*cos(q[2]) + self.L4*dq[2]*sin(q[1])*sin(q[2])*sin(q[3])*cos(q[0] + pi/4) - self.L4*dq[3]*sin(q[0] + pi/4)*sin(q[2])*cos(q[3]) - self.L4*dq[3]*sin(q[1])*cos(q[0] + pi/4)*cos(q[2])*cos(q[3]) - self.L4*dq[3]*sin(q[3])*cos(q[0] + pi/4)*cos(q[1]) - self.L5*dq[0]*sin(q[0] + pi/4)*sin(q[1])*sin(q[2])*sin(q[4]) + self.L5*dq[0]*sin(q[0] + pi/4)*sin(q[1])*cos(q[2])*cos(q[3])*cos(q[4]) + self.L5*dq[0]*sin(q[0] + pi/4)*sin(q[3])*cos(q[1])*cos(q[4]) - self.L5*dq[0]*sin(q[2])*cos(q[0] + pi/4)*cos(q[3])*cos(q[4]) - self.L5*dq[0]*sin(q[4])*cos(q[0] + pi/4)*cos(q[2]) + self.L5*dq[1]*sin(q[1])*sin(q[3])*cos(q[0] + pi/4)*cos(q[4]) + self.L5*dq[1]*sin(q[2])*sin(q[4])*cos(q[0] + pi/4)*cos(q[1]) - self.L5*dq[1]*cos(q[0] + pi/4)*cos(q[1])*cos(q[2])*cos(q[3])*cos(q[4]) + self.L5*dq[2]*sin(q[0] + pi/4)*sin(q[2])*sin(q[4]) - self.L5*dq[2]*sin(q[0] + pi/4)*cos(q[2])*cos(q[3])*cos(q[4]) + self.L5*dq[2]*sin(q[1])*sin(q[2])*cos(q[0] + pi/4)*cos(q[3])*cos(q[4]) + self.L5*dq[2]*sin(q[1])*sin(q[4])*cos(q[0] + pi/4)*cos(q[2]) + self.L5*dq[3]*sin(q[0] + pi/4)*sin(q[2])*sin(q[3])*cos(q[4]) + self.L5*dq[3]*sin(q[1])*sin(q[3])*cos(q[0] + pi/4)*cos(q[2])*cos(q[4]) - self.L5*dq[3]*cos(q[0] + pi/4)*cos(q[1])*cos(q[3])*cos(q[4]) + self.L5*dq[4]*sin(q[0] + pi/4)*sin(q[2])*sin(q[4])*cos(q[3]) - self.L5*dq[4]*sin(q[0] + pi/4)*cos(q[2])*cos(q[4]) + self.L5*dq[4]*sin(q[1])*sin(q[2])*cos(q[0] + pi/4)*cos(q[4]) + self.L5*dq[4]*sin(q[1])*sin(q[4])*cos(q[0] + pi/4)*cos(q[2])*cos(q[3]) + self.L5*dq[4]*sin(q[3])*sin(q[4])*cos(q[0] + pi/4)*cos(q[1]) - self.L6*dq[0]*sin(q[0] + pi/4)*sin(q[1])*sin(q[2])*sin(q[4])*sin(q[5]) + self.L6*dq[0]*sin(q[0] + pi/4)*sin(q[1])*sin(q[3])*cos(q[2])*cos(q[5]) + self.L6*dq[0]*sin(q[0] + pi/4)*sin(q[1])*sin(q[5])*cos(q[2])*cos(q[3])*cos(q[4]) + self.L6*dq[0]*sin(q[0] + pi/4)*sin(q[3])*sin(q[5])*cos(q[1])*cos(q[4]) - self.L6*dq[0]*sin(q[0] + pi/4)*cos(q[1])*cos(q[3])*cos(q[5]) - self.L6*dq[0]*sin(q[2])*sin(q[3])*cos(q[0] + pi/4)*cos(q[5]) - self.L6*dq[0]*sin(q[2])*sin(q[5])*cos(q[0] + pi/4)*cos(q[3])*cos(q[4]) - self.L6*dq[0]*sin(q[4])*sin(q[5])*cos(q[0] + pi/4)*cos(q[2]) + self.L6*dq[1]*sin(q[1])*sin(q[3])*sin(q[5])*cos(q[0] + pi/4)*cos(q[4]) - self.L6*dq[1]*sin(q[1])*cos(q[0] + pi/4)*cos(q[3])*cos(q[5]) + self.L6*dq[1]*sin(q[2])*sin(q[4])*sin(q[5])*cos(q[0] + pi/4)*cos(q[1]) - self.L6*dq[1]*sin(q[3])*cos(q[0] + pi/4)*cos(q[1])*cos(q[2])*cos(q[5]) - self.L6*dq[1]*sin(q[5])*cos(q[0] + pi/4)*cos(q[1])*cos(q[2])*cos(q[3])*cos(q[4]) + self.L6*dq[2]*sin(q[0] + pi/4)*sin(q[2])*sin(q[4])*sin(q[5]) - self.L6*dq[2]*sin(q[0] + pi/4)*sin(q[3])*cos(q[2])*cos(q[5]) - self.L6*dq[2]*sin(q[0] + pi/4)*sin(q[5])*cos(q[2])*cos(q[3])*cos(q[4]) + self.L6*dq[2]*sin(q[1])*sin(q[2])*sin(q[3])*cos(q[0] + pi/4)*cos(q[5]) + self.L6*dq[2]*sin(q[1])*sin(q[2])*sin(q[5])*cos(q[0] + pi/4)*cos(q[3])*cos(q[4]) + self.L6*dq[2]*sin(q[1])*sin(q[4])*sin(q[5])*cos(q[0] + pi/4)*cos(q[2]) + self.L6*dq[3]*sin(q[0] + pi/4)*sin(q[2])*sin(q[3])*sin(q[5])*cos(q[4]) - self.L6*dq[3]*sin(q[0] + pi/4)*sin(q[2])*cos(q[3])*cos(q[5]) + self.L6*dq[3]*sin(q[1])*sin(q[3])*sin(q[5])*cos(q[0] + pi/4)*cos(q[2])*cos(q[4]) - self.L6*dq[3]*sin(q[1])*cos(q[0] + pi/4)*cos(q[2])*cos(q[3])*cos(q[5]) - self.L6*dq[3]*sin(q[3])*cos(q[0] + pi/4)*cos(q[1])*cos(q[5]) - self.L6*dq[3]*sin(q[5])*cos(q[0] + pi/4)*cos(q[1])*cos(q[3])*cos(q[4]) + self.L6*dq[4]*sin(q[0] + pi/4)*sin(q[2])*sin(q[4])*sin(q[5])*cos(q[3]) - self.L6*dq[4]*sin(q[0] + pi/4)*sin(q[5])*cos(q[2])*cos(q[4]) + self.L6*dq[4]*sin(q[1])*sin(q[2])*sin(q[5])*cos(q[0] + pi/4)*cos(q[4]) + self.L6*dq[4]*sin(q[1])*sin(q[4])*sin(q[5])*cos(q[0] + pi/4)*cos(q[2])*cos(q[3]) + self.L6*dq[4]*sin(q[3])*sin(q[4])*sin(q[5])*cos(q[0] + pi/4)*cos(q[1]) + self.L6*dq[5]*sin(q[0] + pi/4)*sin(q[2])*sin(q[3])*sin(q[5]) - self.L6*dq[5]*sin(q[0] + pi/4)*sin(q[2])*cos(q[3])*cos(q[4])*cos(q[5]) - self.L6*dq[5]*sin(q[0] + pi/4)*sin(q[4])*cos(q[2])*cos(q[5]) + self.L6*dq[5]*sin(q[1])*sin(q[2])*sin(q[4])*cos(q[0] + pi/4)*cos(q[5]) + self.L6*dq[5]*sin(q[1])*sin(q[3])*sin(q[5])*cos(q[0] + pi/4)*cos(q[2]) - self.L6*dq[5]*sin(q[1])*cos(q[0] + pi/4)*cos(q[2])*cos(q[3])*cos(q[4])*cos(q[5]) - self.L6*dq[5]*sin(q[3])*cos(q[0] + pi/4)*cos(q[1])*cos(q[4])*cos(q[5]) - self.L6*dq[5]*sin(q[5])*cos(q[0] + pi/4)*cos(q[1])*cos(q[3])),
@@ -506,6 +431,9 @@ class BaxterKinematics3:
         """ヤコビ行列の時間微分を全部計算する
         ・
         """
+        q = np.ravel(q).tolist()
+        dq = np.ravel(dq).tolist()
+        
         djWo = self.djacobi_Wo(q, dq)
         djBL = self.djacobi_BL(q, dq)
         dj0 = self.djacobi_0(q, dq)
@@ -518,3 +446,18 @@ class BaxterKinematics3:
         dj7 = self.djacobi_7(q, dq)
         djGL = self.djacobi_GL(q, dq)
         return [djWo, djBL, dj0, dj1, dj2, dj3, dj4, dj5, dj6, dj7, djGL]
+
+
+if __name__ == '__main__':
+    # 原点座標のテスト
+    hoge = Kinematics()
+    
+    q = np.array([[30, 30, 30, 30, 30, 30, 30]]).T
+    dq = np.array([[30, 30, 30, 30, 30, 30, 30]]).T
+    
+    start = time.time()
+    for i in range(1):
+        hoge.update_homo_transf_mat(q)
+        o_new = hoge.o()
+    print(time.time() - start)
+    [print(o) for o in o_new]
