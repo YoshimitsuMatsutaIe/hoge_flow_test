@@ -12,30 +12,20 @@ class BaxterKinematics3:
     ・ちょっとはやい
     """
     
-    # def __init__(self, L, h, H, L0, L1, L2, L3, L4, L5, L6):
-    #     self.L = L
-    #     self.h = h
-    #     self.H = H
-    #     self.L0 = L0
-    #     self.L1 = L1
-    #     self.L2 = L2
-    #     self.L3 = L3
-    #     self.L4 = L4
-    #     self.L5 = L5
-    #     self.L6 = L6
-        
+    L = 278e-3
+    h = 64e-3
+    H = 1104e-3
+    L0 = 270.35e-3
+    L1 = 69e-3
+    L2 = 364.35e-3
+    L3 = 69e-3
+    L4 = 374.29e-3
+    L5 = 10e-3
+    L6 = 368.3e-3
+    
     def __init__(self, **kwargs):
         """こっちが速い（なんで）"""
-        self.L = kwargs.pop('L')
-        self.h = kwargs.pop('h')
-        self.H = kwargs.pop('H')
-        self.L0 = kwargs.pop('L0')
-        self.L1 = kwargs.pop('L1')
-        self.L2 = kwargs.pop('L2')
-        self.L3 = kwargs.pop('L3')
-        self.L4 = kwargs.pop('L4')
-        self.L5 = kwargs.pop('L5')
-        self.L6 = kwargs.pop('L6')
+        return
     
     def origins(self, q):
         """世界座標系から見た局所座標系の原点座標をまとめて計算"""

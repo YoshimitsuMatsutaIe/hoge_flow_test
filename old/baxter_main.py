@@ -21,18 +21,7 @@ import rmp
 
 
 ### パラメータ ###
-BaxterKinema = baxter_utils_3.BaxterKinematics3(
-    L = 278e-3,
-    h = 64e-3,
-    H = 1104e-3,
-    L0 = 270.35e-3,
-    L1 = 69e-3,
-    L2 = 364.35e-3,
-    L3 = 69e-3,
-    L4 = 374.29e-3,
-    L5 = 10e-3,
-    L6 = 368.3e-3
-)
+BaxterKinema = baxter_utils_3.BaxterKinematics3()
 
 # joint limits
 q1_min, q1_max = -141, 51
