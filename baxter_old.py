@@ -6,6 +6,7 @@ import numpy as np
 from math import cos, sin, tan, pi, sqrt
 import time
 
+
 class Kinematics:
     """ローカル座標系の原点，ヤコビ行列等を計算
     ・ちょっとはやい
@@ -32,31 +33,42 @@ class Kinematics:
         return
     
     
+    def homo_transf_matrix(self, alpha, a, d, theta):
+        """同次変換行列(DH記法)
+        """
+        return np.array([
+            [cos(theta), -sin(theta), 0, a],
+            [sin(theta)*cos(alpha), cos(theta)*cos(alpha), -sin(alpha), -d*sin(alpha)],
+            [sin(theta)*sin(alpha), cos(theta)*sin(alpha), -cos(alpha), d*cos(alpha)],
+            [0, 0, 0, 1],
+            ])
+    
+    
+    def diff_homo_transf_matrix_by_theta(self, alpha, a, d, theta):
+        """同次変換行列をthetaで微分"""
+        return np.array([
+            [-sin(theta), -cos(theta), 0, 0],
+            [cos(theta)*cos(alpha), -sin(theta)*cos(alpha), 0, 0],
+            [cos(theta)*sin(alpha), -sin(theta)*sin(alpha), 0, 0],
+            [0, 0, 0, 0],
+            ])
+    
+    
     def update_homo_transf_mat(self, q):
         """同時変換行列を更新
         ・
         """
         q = np.ravel(q).tolist()
         
-        def homo_transf_matrix(alpha, a, d, theta):
-            """同次変換行列(DH記法)
-            """
-            return np.array([
-                [cos(theta), -sin(theta), 0, a],
-                [sin(theta)*cos(alpha), cos(theta)*cos(alpha), -sin(alpha), -d*sin(alpha)],
-                [sin(theta)*sin(alpha), cos(theta)*sin(alpha), -cos(alpha), d*cos(alpha)],
-                [0, 0, 0, 1],
-                ])
-        
         DH_params = [
-            (0, 0, self.L0, 0),  # T_BL_0
-            (0, 0, 0, q[0]),
-            (-pi/2, self.L1, 0, q[1]+pi/2),
-            (pi/2, 0, self.L2, q[2]),
-            (-pi/2, self.L3, 0, q[3]),
-            (pi/2, 0, self.L4, q[4]),
-            (-pi/2, self.L5, 0, q[5]),
-            (pi/2, 0, 0, q[6]),
+            (    0,       0, self.L0,         0),  # T_BL_0
+            (    0,       0,       0,      q[0]),
+            (-pi/2, self.L1,       0, q[1]+pi/2),
+            ( pi/2,       0, self.L2,      q[2]),
+            (-pi/2, self.L3,       0,      q[3]),
+            ( pi/2,       0, self.L4,      q[4]),
+            (-pi/2, self.L5,       0,      q[5]),
+            ( pi/2,       0,       0,      q[6]),
         ]
         
         def T_Wo_BL():
@@ -69,9 +81,7 @@ class Kinematics:
             ])
         
         # 同次変換行列のリスト．0から順にT_Wo_BL, T_BL_0, T_0_1, ...
-        self.T_i_j = [T_Wo_BL()] + [homo_transf_matrix(*param) for param in DH_params]
-        
-        #print(self.T_i_j)
+        self.T_i_j = [T_Wo_BL()] + [self.homo_transf_matrix(*param) for param in DH_params]
         
         self.T_Wo_j = []  # 同次変換行列のリスト．0から順にT_Wo_BL, T_Wo_0, T_Wo_1, ...
         for i, T in enumerate(self.T_i_j):
@@ -79,8 +89,6 @@ class Kinematics:
                 self.T_Wo_j.append(T)
             else:
                 self.T_Wo_j.append(self.T_Wo_j[i-1] @ T)
-        
-        #print(self.T_Wo_j)
         
         return
     
@@ -461,3 +469,4 @@ if __name__ == '__main__':
         o_new = hoge.o()
     print(time.time() - start)
     [print(o) for o in o_new]
+
