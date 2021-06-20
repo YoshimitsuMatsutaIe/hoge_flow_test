@@ -1,6 +1,14 @@
 import numpy as np
+import types
 
-A = np.random.rand(3, 4)
-B = np.random.rand(4, 4)
+def a():
+    return 2
 
-print(A @ B)
+print(type(a))
+
+b = 1
+
+if isinstance(a, types.FunctionType):
+    print('関数')
+else:
+    pass

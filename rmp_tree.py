@@ -1,22 +1,22 @@
 """作成中"""
 
 import numpy as np
-
+#import types
 
 class RMPAlgebra:
     
     @classmethod
     def pushforward(cls, x, dx, psi, J):
         """1個だけpush"""
-        y = psi(x)
-        dy = J(x) @ dx
+        y = psi
+        dy = J @ dx
         return y, dy
     
     @classmethod
     def pullback(cls, x, dx, J, dJ, f, M):
         """1個だけpull"""
-        fi = J(x).T @ (f - M @ dJ(x, dx) @ dx)
-        Mi = J(x).T @ M @ J(x)
+        fi = J.T @ (f - M @ dJ @ dx)
+        Mi = J.T @ M @ J
         return fi, Mi
     
     @classmethod
