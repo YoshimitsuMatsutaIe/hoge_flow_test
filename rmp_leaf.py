@@ -50,7 +50,7 @@ class TargetAttractorFromOriginal(rmp_tree.RMPLeafBase):
         self, name, parent, parent_param,
         attract_max_speed, attract_gain, attract_a_damp_r,
         attract_sigma_W, attract_sigma_H, attract_A_damp_r,
-        robot_model,
+        psi, J, dJ,
     ):
         """"""
         
@@ -60,15 +60,15 @@ class TargetAttractorFromOriginal(rmp_tree.RMPLeafBase):
         self.attract_a_damp_r = attract_a_damp_r
         self.attract_sigma_W = attract_sigma_W
         self.attract_sigma_H = attract_sigma_H
-        self.attract_A_damp_r = self.attract_A_damp_r
+        self.attract_A_damp_r = attract_A_damp_r
         
         
         super().__init__(
             name = name,
             parent = parent,
-            psi = robot_model.glipper_o,
-            J = robot_model.J_glipper_o,
-            dJ = robot_model.dJ_glipper_o,
+            psi = psi,
+            J = J,
+            dJ = dJ,
             rmp = self.rmp,
         )
     
@@ -93,7 +93,7 @@ class CollisionAvoidanceFromOriginal(rmp_tree.RMPLeafBase):
     def __init__(
         self, name, parent, parent_param,
         obs_scale_rep, obs_scale_damp, obs_ratio, obs_rep_gain, obs_r,
-        robot_model,
+        psi, J, dJ,
     ):
         self.obs_scale_rep = obs_scale_rep
         self.obs_scale_damp = obs_scale_damp
@@ -104,9 +104,9 @@ class CollisionAvoidanceFromOriginal(rmp_tree.RMPLeafBase):
         # なおしてほしい↓
         super().__init__(
             name = name,
-            psi = robot_model.glipper_o,
-            J = robot_model.J_glipper_o,
-            dJ = robot_model.dJ_glipper_o,
+            psi = psi,
+            J = J,
+            dJ = dJ,
             rmp = self.rmp,
         )
     
@@ -147,7 +147,7 @@ class TargetAtracttorFromGDS(rmp_tree.RMPLeafBase):
         attract_sigma_alpha, attract_sigma_gamma,
         attract_w_upper, attract_w_lower,
         attract_alpha, attract_epsilon,
-        robot_model,
+        psi, J, dJ,
     ):
         self.attract_max_speed = attract_max_speed
         self.attract_gain = attract_gain
@@ -164,9 +164,9 @@ class TargetAtracttorFromGDS(rmp_tree.RMPLeafBase):
             name = name,
             parent = parent,
             parent_param=None,
-            psi = None,
-            J = None,
-            dJ = None,
+            psi = psi,
+            J = J,
+            dJ = dJ,
             rmp = self.rmp,
         )
     
@@ -268,6 +268,7 @@ class CollisionAvoidanceFromGDS(rmp_tree.RMPLeafBase):
     def __init__(
         self, name, parent, parent_param,
         obs_rw, obs_sigma, obs_alpha,
+        psi, J, dJ,
         
     ):
         
@@ -279,9 +280,9 @@ class CollisionAvoidanceFromGDS(rmp_tree.RMPLeafBase):
             name = name,
             parent = parent,
             parent_param=None,
-            psi = None,
-            J = None,
-            dJ = None,
+            psi = psi,
+            J = J,
+            dJ = dJ,
             rmp = self.rmp,
         )
     
@@ -331,6 +332,7 @@ class JointLimitAvoidanceFromGDS(rmp_tree.RMPLeafBase):
     def __init__(
         self, name, parent, parent_param,
         jl_c, jl_lambda, jl_upper, jl_lower, jl_eta_p, jl_eta_d,
+        psi, J, dJ,
     ):
         
         self.jl_c = jl_c
@@ -344,9 +346,9 @@ class JointLimitAvoidanceFromGDS(rmp_tree.RMPLeafBase):
             name = name,
             parent = parent,
             parent_param=None,
-            psi = None,
-            J = None,
-            dJ = None,
+            psi = psi,
+            J = J,
+            dJ = dJ,
             rmp = self.rmp,
         )
     

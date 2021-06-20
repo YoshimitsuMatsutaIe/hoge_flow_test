@@ -55,8 +55,9 @@ class RMPNode:
         再帰関数？
         """
         
-        if self.psi is not None and self.J is not None:
-            self.x, self.dx = RMPAlgebra.pushforward(self.dx, self.dx, self.psi, self.J)
+        if self.psi is not None:
+            if self.J is not None:
+                self.x, self.dx = RMPAlgebra.pushforward(self.dx, self.dx, self.psi, self.J)
         
         [child.pushforward() for child in self.children]
     
@@ -70,12 +71,13 @@ class RMPNode:
         M = np.zeros((max(self.x.shape), max(self.x.shape)))
         
         for child in self.children:
-            if child.f is not None and child.M is not None:
-                fi, Mi = RMPAlgebra.pullback(
-                    self.x, self.dx, child.J, child.dJ, child.f, child.M,
-                    )
-                f += fi
-                M += Mi
+            if child.f is not None:
+                if child.M is not None:
+                    fi, Mi = RMPAlgebra.pullback(
+                        self.x, self.dx, child.J, child.dJ, child.f, child.M,
+                        )
+                    f += fi
+                    M += Mi
         
         self.f = f
         self.M = M

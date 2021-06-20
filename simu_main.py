@@ -16,10 +16,12 @@ import time
 # 自作
 import rmp_tree
 import rmp_leaf
-
+import baxter_old
+import baxter_maps
 
 def simu():
-
+    """シミュレーション"""
+    
     q1_init = 0
     q2_init = -31
     q3_init = 0
@@ -33,18 +35,13 @@ def simu():
     state_init = np.concatenate((q, dq), axis=None)
     #print(state_init)
     
+    goal = np.array([[0, 0, 0]]).T
     
     ### tree構築 ###
     # root
     root = rmp_tree.RMPRoot(name='root')
     
-    # frame
-    frames = []
-    for i in range(7):
-        name = 'T_' + str(i)
-        frames.append(
-            rmp_tree.RMPNode(name, root)
-        )
+    
     
     
     
@@ -73,10 +70,24 @@ def simu():
     
     
     ### 図示 ###
+    # q -> xへ変換
+    model = baxter_old.Kinematics()
+    x = []
+    error = []
+    for q1, q2, q3, q4, q5, q6, q7 in zip(
+        sol.y[0], sol.y[1], sol.y[2], sol.y[3], sol.y[4], sol.y[5], sol.y[6], sol.y[7]
+    ):
+        q = np.array([[q1, q2, q3, q4, q5, q6, q7]]).T
+        model.update_homo_transf_mat(q)
+        x.append([model.o])
+        error.append(np.linalg.norm(goal - x[-1][-1]))
+    
+    t_list = list(t)
+    
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    
-    
+    ax.plot(t_list, error, label = 'error of goal - ee')
+    ax.legend()
     plt.show()
 
 
