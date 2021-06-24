@@ -93,6 +93,14 @@ class Kinematics:
         return
     
     
+    def update_diff_homo_transf_mat_by_theta(self, q):
+        """同次変換行列のtheta微分を更新"""
+        
+    
+    
+    
+    
+    
     def o(self,):
         """基底"""
         

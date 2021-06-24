@@ -99,14 +99,14 @@ goal_posi = np.array([[0.3, -0.6, 1]])
 goal_velo = np.array([[0, 0, 0]])
 
 # 障害物位置
-#obs_posi = np.array([[0.4, -0.6, 1]])
+obs_posi = np.array([[0.4, 0.6, 1]])
 #obs_posi = np.array([[10, 10, 10]])
-obs_posi = np.array([
-    [0.6, -0.6, 1],
-    [0.6, -0.6, 1.1],
-    [0.6, -0.6, 0.9],
-    [0.6, -0.6, 1.2]
-    ])
+# obs_posi = np.array([
+#     [0.8, -0.6, 1],
+#     [0.8, -0.6, 1.1],
+#     [0.8, -0.6, 0.9],
+#     [0.8, -0.6, 1.2]
+#     ])
 oend = obs_posi.shape[0]
 
 time_sim_start = time.time()
