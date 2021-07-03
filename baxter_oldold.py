@@ -1,3 +1,5 @@
+"""力技"""
+
 import numpy as np
 from math import pi, sqrt
 from math import cos as c
@@ -5,7 +7,7 @@ from math import sin as s
 
 
 class BaxterFuncs:
-    """"""
+    """すごく遅い"""
     
     L = 278e-3
     h = 64e-3

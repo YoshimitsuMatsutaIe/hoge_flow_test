@@ -3,16 +3,17 @@
 
 import numpy as np
 
-import baxter_old
+import baxter_oldold
 
 
-class Maps(baxter_old.Kinematics):
+class Maps(baxter_oldold.BaxterFuncs):
     """baxterの写像"""
     
     def __init__(self,):
         
         super().__init__()
         self.init_r_bars()
+        self.maps = {}
     
     
     def init_r_bars(self,):
@@ -76,13 +77,15 @@ class Maps(baxter_old.Kinematics):
         return
     
     
-    def maps_q_to_x(self, ):
-        I = np.concatenate([np.eye(3), np.zeros((3, 1))], axis=1)
+    def maps_q_to_x(self,):
+        self.maps['q_to_x0'] = ()
+    
+    
+    def update_all_maps(self, q, dq):
+        """"psi, J, dJを全て更新"""
         
-    
-    
-    def update_maps(self, q, dq):
-        self.update_homo_transf_mat(q)
+        self.q = np.ravel(q).tolist()
+        self.dq = np.ravel(dq).tolist()
         
         for id in range(1):
             self.maps[id] = ()
@@ -100,4 +103,5 @@ class Maps(baxter_old.Kinematics):
 
 
 if __name__ == '__main__':
-    pass
+    
+    hoge = Maps()
