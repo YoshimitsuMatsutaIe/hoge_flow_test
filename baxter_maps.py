@@ -13,6 +13,53 @@ class Maps(baxter_oldold.BaxterFuncs):
         
         super().__init__()
         self.init_r_bars()
+        
+        self.func_T = [
+            self.T0, self.T1, self.T2, self.T3, self.T4,
+            self.T5, self.T6, self.T7, self.T8, self.T9,
+        ]  # 同次変換行列（関数）のリスト
+        
+        self.func_Jax = [
+            self.Jax0, self.Jax1, self.Jax2, self.Jax3, self.Jax4,
+            self.Jax5, self.Jax6, self.Jax7, self.Jax8, self.Jax9,
+        ]
+        
+        self.func_Jay = [
+            self.Jay0, self.Jay1, self.Jay2, self.Jay3, self.Jay4,
+            self.Jay5, self.Jay6, self.Jay7, self.Jay8, self.Jay9,
+        ]
+        
+        self.func_Jaz = [
+            self.Jaz0, self.Jaz1, self.Jaz2, self.Jaz3, self.Jaz4,
+            self.Jaz5, self.Jaz6, self.Jaz7, self.Jaz8, self.Jaz9,
+        ]
+        
+        self.func_Jo = [
+            self.Jo0, self.Jo1, self.Jo2, self.Jo3, self.Jo4,
+            self.Jo5, self.Jo6, self.Jo7, self.Jo8, self.Jo9,
+        ]
+        
+        self.func_dJax = [
+            self.dJax0, self.dJax1, self.dJax2, self.dJax3, self.dJax4,
+            self.dJax5, self.dJax6, self.dJax7, self.dJax8, self.dJax9,
+        ]
+        
+        self.func_dJay = [
+            self.dJay0, self.dJay1, self.dJay2, self.dJay3, self.dJay4,
+            self.dJay5, self.dJay6, self.dJay7, self.dJay8, self.dJay9,
+        ]
+        
+        self.func_dJaz = [
+            self.dJaz0, self.dJaz1, self.dJaz2, self.dJaz3, self.dJaz4,
+            self.dJaz5, self.dJaz6, self.dJaz7, self.dJaz8, self.dJaz9,
+        ]
+        
+        self.func_dJo = [
+            self.dJo0, self.dJo1, self.dJo2, self.dJo3, self.dJo4,
+            self.dJo5, self.dJo6, self.dJo7, self.dJo8, self.dJo9,
+        ]
+        
+        
         self.maps = {}
     
     
@@ -76,9 +123,28 @@ class Maps(baxter_oldold.BaxterFuncs):
         ]
         return
     
+    def update_all_baxter(self,):
+        self.T = [f(self.q) for f in self.func_T]
+        self.Jax = [f(self.q) for f in self.func_Jax]
+        self.Jay = [f(self.q) for f in self.func_Jay]
+        self.Jaz = [f(self.q) for f in self.func_Jaz]
+        self.Jo = [f(self.q) for f in self.func_Jo]
+        self.dJax = [f(self.q, self.dq) for f in self.func_dJax]
+        self.dJay = [f(self.q, self.dq) for f in self.func_dJay]
+        self.dJaz = [f(self.q, self.dq) for f in self.func_dJaz]
+        self.dJo = [f(self.q, self.dq) for f in self.func_dJo]
+        return
     
-    def maps_q_to_x(self,):
-        self.maps['q_to_x0'] = ()
+    def update_maps_q_to_x(self,):
+        """q -> xのpsi, J, dJを更新"""
+        for i in range(7):
+            name = 'q_to_x' + str(i)
+            self.maps[name] = [
+                self.T[2+i][0:3, 3:4],
+                self.Jo[2+i],
+                self.dJo[2+i],
+            ]
+        return
     
     
     def update_all_maps(self, q, dq):
@@ -87,8 +153,8 @@ class Maps(baxter_oldold.BaxterFuncs):
         self.q = np.ravel(q).tolist()
         self.dq = np.ravel(dq).tolist()
         
-        for id in range(1):
-            self.maps[id] = ()
+        # for id in range(1):
+        #     self.maps[id] = ()
         
         return
     
@@ -104,4 +170,11 @@ class Maps(baxter_oldold.BaxterFuncs):
 
 if __name__ == '__main__':
     
+    q = np.array([[1, 2, 3, 4, 5, 6, 7,]]).T
+    dq = np.array([[1, 2, 3, 4, 5, 6, 7,]]).T
+    
     hoge = Maps()
+    hoge.update_all_maps(q, dq)
+    hoge.update_all_baxter()
+    hoge.update_maps_q_to_x()
+    print(hoge.maps)
