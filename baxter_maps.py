@@ -124,15 +124,15 @@ class Maps(baxter_oldold.BaxterFuncs):
         return
     
     def update_all_baxter(self,):
-        self.T = [f(self.q) for f in self.func_T]
-        self.Jax = [f(self.q) for f in self.func_Jax]
-        self.Jay = [f(self.q) for f in self.func_Jay]
-        self.Jaz = [f(self.q) for f in self.func_Jaz]
-        self.Jo = [f(self.q) for f in self.func_Jo]
-        self.dJax = [f(self.q, self.dq) for f in self.func_dJax]
-        self.dJay = [f(self.q, self.dq) for f in self.func_dJay]
-        self.dJaz = [f(self.q, self.dq) for f in self.func_dJaz]
-        self.dJo = [f(self.q, self.dq) for f in self.func_dJo]
+        self.T = [f(self.q_list) for f in self.func_T]
+        self.Jax = [f(self.q_list) for f in self.func_Jax]
+        self.Jay = [f(self.q_list) for f in self.func_Jay]
+        self.Jaz = [f(self.q_list) for f in self.func_Jaz]
+        self.Jo = [f(self.q_list) for f in self.func_Jo]
+        self.dJax = [f(self.q_list, self.dq_list) for f in self.func_dJax]
+        self.dJay = [f(self.q_list, self.dq_list) for f in self.func_dJay]
+        self.dJaz = [f(self.q_list, self.dq_list) for f in self.func_dJaz]
+        self.dJo = [f(self.q_list, self.dq_list) for f in self.func_dJo]
         return
     
     def update_maps_q_to_x(self,):
@@ -146,12 +146,33 @@ class Maps(baxter_oldold.BaxterFuncs):
             ]
         return
     
+    def update_maps_x_GL_to_dis_x_to_goal(self, g, dg):
+        """x_GL -> dis_x_to_goalのpsi, J, dJを更新"""
+        
+        z = g - self.T[-1][0:3, 3:4]
+        
+        dis = np.linalg.norm(z)  # GLからgoalまでの距離
+        
+        psi = dis
+        J = -1/dis * z.T
+        
+        dz = dg - J @ self.q
+        dJ = 1/(dis**2) * z.T - 1/dis * (dg - dz).T
+        
+        self.maps['x_GL_to_dis_x_to_goal'] = [psi, J, dJ]
+        return
+    
+    def update_x_to_dis_x_to_obs(self, o, do):
+        """x -> dis_x_to_obsのpsi, J, dJを更新"""
+        
+    
     
     def update_all_maps(self, q, dq):
         """"psi, J, dJを全て更新"""
-        
-        self.q = np.ravel(q).tolist()
-        self.dq = np.ravel(dq).tolist()
+        self.q = q
+        self.dq = dq
+        self.q_list = np.ravel(q).tolist()
+        self.dq_list = np.ravel(dq).tolist()
         
         # for id in range(1):
         #     self.maps[id] = ()
@@ -177,4 +198,4 @@ if __name__ == '__main__':
     hoge.update_all_maps(q, dq)
     hoge.update_all_baxter()
     hoge.update_maps_q_to_x()
-    print(hoge.maps)
+    
