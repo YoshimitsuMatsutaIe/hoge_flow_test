@@ -1,6 +1,6 @@
 import numpy as np
 from math import pi, cos, sin, tan, sqrt
-
+from math import cos as c
 
 
 class BaxterFuncs:
@@ -172,6 +172,92 @@ class BaxterFuncs:
 
 
 
+    def dJax0(self, q, dq):
+        return np.array(
+    def dJax1(self, q, dq):
+        return np.array(
+    def dJax2(self, q, dq):
+        return np.array(
+    def dJax3(self, q, dq):
+        return np.array(
+    def dJax4(self, q, dq):
+        return np.array(
+    def dJax5(self, q, dq):
+        return np.array(
+    def dJax6(self, q, dq):
+        return np.array(
+    def dJax7(self, q, dq):
+        return np.array(
+    def dJax8(self, q, dq):
+        return np.array(
+    def dJax9(self, q, dq):
+        return np.array(
+
+
+    def dJay0(self, q, dq):
+        return np.array(
+    def dJay1(self, q, dq):
+        return np.array(
+    def dJay2(self, q, dq):
+        return np.array(
+    def dJay3(self, q, dq):
+        return np.array(
+    def dJay4(self, q, dq):
+        return np.array(
+    def dJay5(self, q, dq):
+        return np.array(
+    def dJay6(self, q, dq):
+        return np.array(
+    def dJay7(self, q, dq):
+        return np.array(
+    def dJay8(self, q, dq):
+        return np.array(
+    def dJay9(self, q, dq):
+        return np.array(
+
+
+    def dJaz0(self, q, dq):
+        return np.array(
+    def dJaz1(self, q, dq):
+        return np.array(
+    def dJaz2(self, q, dq):
+        return np.array(
+    def dJaz3(self, q, dq):
+        return np.array(
+    def dJaz4(self, q, dq):
+        return np.array(
+    def dJaz5(self, q, dq):
+        return np.array(
+    def dJaz6(self, q, dq):
+        return np.array(
+    def dJaz7(self, q, dq):
+        return np.array(
+    def dJaz8(self, q, dq):
+        return np.array(
+    def dJaz9(self, q, dq):
+        return np.array(
+
+
+    def dJo0(self, q, dq):
+        return np.array(
+    def dJo1(self, q, dq):
+        return np.array(
+    def dJo2(self, q, dq):
+        return np.array(
+    def dJo3(self, q, dq):
+        return np.array(
+    def dJo4(self, q, dq):
+        return np.array(
+    def dJo5(self, q, dq):
+        return np.array(
+    def dJo6(self, q, dq):
+        return np.array(
+    def dJo7(self, q, dq):
+        return np.array(
+    def dJo8(self, q, dq):
+        return np.array(
+    def dJo9(self, q, dq):
+        return np.array(
 
 
 
@@ -179,3 +265,12 @@ class BaxterFuncs:
 
 
 
+
+if __name__ == "__main__":
+    
+    q = [1, 2, 3, 4, 5, 6, 7]
+    
+    hoge = BaxterFuncs()
+    
+    Jo9 = hoge.Jo9(q)
+    print(Jo9)

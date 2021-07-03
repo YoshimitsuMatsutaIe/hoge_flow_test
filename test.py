@@ -62,8 +62,6 @@
 # xi_1_ = [par @ dx for par in partial_ms]
 # xi_1 = np.concatenate(xi_1_, axis = 1) @ dx
 
-import numpy as np
+from math import cos as c
 
-a = np.array([[1, 2, 3]])
-b, c, d = a
-print(b, c, d)
+print(c(3.14))
