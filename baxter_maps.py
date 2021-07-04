@@ -179,9 +179,17 @@ class Maps(baxter_oldold.BaxterFuncs):
         
         obs_num = len(o)
         
-        for i, (T, Jax, Jay, Jaz, Jo, dJax, dJay, dJaz, dJo) in enumerate(zip(
-            self.T[2:], self.Jax[2:], self.Jay[2:], self.Jaz[2:], self.Jo[2:], self.dJax[2:], self.dJay[2:], self.dJaz[2:], self.dJo[2:],
-            )):  # 0, 1は固定
+        for i, T in enumerate(self.T[2:]):  # 0, 1は固定
+            Jax = self.Jax[i]
+            Jay = self.Jay[i]
+            Jaz = self.Jaz[i]
+            Jo = self.Jo[i]
+            dJax = self.dJax[i]
+            dJay = self.dJay[i]
+            dJaz = self.dJaz[i]
+            dJo = self.dJo[i]
+            
+            Block_J = np.concatenate([Jax, Jay, Jaz, Jo], axis=1)  # ブロックヤコビ
             
             for j in range(1, ):
                 
