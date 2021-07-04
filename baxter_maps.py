@@ -230,7 +230,7 @@ class Maps(baxter_oldold.BaxterFuncs):
                 for k, (o, do) in enumerate(zip(obs, dobs)):
                     key = (i, j, k)
                     
-                    x, J_, dJ_ = self.maps[(i, j)]
+                    x, J_, _ = self.maps[(i, j)]
                     dx = J_ @ self.q
                     
                     self.maps[key] = maps_of_distance(x, dx, o, do)

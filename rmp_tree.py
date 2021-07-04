@@ -32,6 +32,11 @@ class RMPNode:
         self.name = name
         self.parent = parent
         self.children = []
+        
+        # nodeをparnetに接続＿
+        if self.parent:
+            self.parent.add_child(self)
+        
         self.psi = psi
         self.J = J
         self.dJ = dJ
@@ -81,6 +86,15 @@ class RMPNode:
         
         self.f = f
         self.M = M
+    
+    
+    def remove_children(self,):
+        """childrenを初期化
+        ・障害物点の数が変動する場合に使用
+        """
+        
+        self.children = []
+        return
 
 
 
@@ -143,6 +157,8 @@ class RMPLeafBase(RMPNode):
     def update(self):
         self.pushforward()
         return
+
+
 
 
 if __name__ == "__main__":

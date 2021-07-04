@@ -16,12 +16,13 @@ import time
 # 自作
 import rmp_tree
 import rmp_leaf
-import baxter_old
+import baxter_oldold
 import baxter_maps
 
 def simu():
     """シミュレーション"""
     
+    # 初期条件
     q1_init = 0
     q2_init = -31
     q3_init = 0
@@ -37,15 +38,29 @@ def simu():
     
     goal = np.array([[0, 0, 0]]).T
     
+    
+    Maps = baxter_maps.Maps()
+    maps = Maps.maps
+    
     ### tree構築 ###
     # root
     root = rmp_tree.RMPRoot(name='root')
     
+    # control points
+    cpoint_num = sum([len(r) for r in maps.r_bars])
+    
+    cpoints = []
+    for i in range(cpoint_num):
+        cpoint = rmp_tree.RMPNode(
+            name = 'cpoint_' + str(i),
+            parent = root,
+            psi = maps
+        )
     
     
     
     
-    
+    ### シミュレーション実行 ###
     def dynamics(t, state):
         state = state.reshape((2, 1))
         q = state[0]
@@ -59,7 +74,7 @@ def simu():
     TIME_INTERVAL = 0.01
     t = np.arange(0, TIME_SPAN, TIME_INTERVAL)
     
-    ### シミュレーション実行 ###
+    
     sol = solve_ivp(
         fun = dynamics,
         t_span = (0, TIME_SPAN),
