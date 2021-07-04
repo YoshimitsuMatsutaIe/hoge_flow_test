@@ -173,7 +173,6 @@ class Maps(baxter_oldold.BaxterFuncs):
         
         return [psi, J, dJ]
     
-    
     def update_q_to_x(self,):
         """q -> xのpsi, J, dJを更新"""
         
@@ -249,4 +248,5 @@ if __name__ == '__main__':
 
     hoge = Maps()
     hoge.update_all_maps(q, dq)
+    print('hwhw')
 
