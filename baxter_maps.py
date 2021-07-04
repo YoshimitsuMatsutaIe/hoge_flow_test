@@ -67,54 +67,54 @@ class Maps(baxter_oldold.BaxterFuncs):
         """制御点座標を追加"""
 
         r_bar_1 = [
-            np.array([[0, self.L1/2, -self.L0/2]]).T,
-            np.array([[0, -self.L1/2, -self.L0/2]]).T,
-            np.array([[self.L1/2, 0, -self.L0/2]]).T,
-            np.array([[-self.L1/2, 0, -self.L0/2]]).T,
+            np.array([[0, self.L1/2, -self.L0/2, 1]]).T,
+            np.array([[0, -self.L1/2, -self.L0/2, 1]]).T,
+            np.array([[self.L1/2, 0, -self.L0/2, 1]]).T,
+            np.array([[-self.L1/2, 0, -self.L0/2, 1]]).T,
         ]  # 1座標系からみた制御点位置
 
         r_bar_2 = [
-            np.array([[0, 0, self.L3/2]]).T,
-            np.array([[0, 0, -self.L3/2]]).T,
+            np.array([[0, 0, self.L3/2, 1]]).T,
+            np.array([[0, 0, -self.L3/2, 1]]).T,
         ]
 
         r_bar_3 = [
-            np.array([[0, self.L3/2, -self.L2*2/3]]).T,
-            np.array([[0, -self.L3/2, -self.L2*2/3]]).T,
-            np.array([[self.L3/2, 0, -self.L2*2/3]]).T,
-            np.array([[-self.L3/2, 0, -self.L2*2/3]]).T,
-            np.array([[0, self.L3/2, -self.L2*1/3]]).T,
-            np.array([[0, -self.L3/2, -self.L2*1/3]]).T,
-            np.array([[self.L3/2, 0, -self.L2*1/3]]).T,
-            np.array([[-self.L3/2, 0, -self.L2*1/3]]).T,
+            np.array([[0, self.L3/2, -self.L2*2/3, 1]]).T,
+            np.array([[0, -self.L3/2, -self.L2*2/3, 1]]).T,
+            np.array([[self.L3/2, 0, -self.L2*2/3, 1]]).T,
+            np.array([[-self.L3/2, 0, -self.L2*2/3, 1]]).T,
+            np.array([[0, self.L3/2, -self.L2*1/3, 1]]).T,
+            np.array([[0, -self.L3/2, -self.L2*1/3, 1]]).T,
+            np.array([[self.L3/2, 0, -self.L2*1/3, 1]]).T,
+            np.array([[-self.L3/2, 0, -self.L2*1/3, 1]]).T,
         ]
 
         r_bar_4 = [
-            np.array([[0, 0, self.L3/2]]).T,
-            np.array([[0, 0, -self.L3/2]]).T,
+            np.array([[0, 0, self.L3/2, 1]]).T,
+            np.array([[0, 0, -self.L3/2, 1]]).T,
         ]
 
         r_bar_5 = [
-            np.array([[0, self.L5/2, -self.L4/2]]).T,
-            np.array([[0, -self.L5/2, -self.L4/2]]).T,
-            np.array([[self.L5/2, 0, -self.L4/2]]).T,
-            np.array([[-self.L5/2, 0, -self.L4/2]]).T,
+            np.array([[0, self.L5/2, -self.L4/2, 1]]).T,
+            np.array([[0, -self.L5/2, -self.L4/2, 1]]).T,
+            np.array([[self.L5/2, 0, -self.L4/2, 1]]).T,
+            np.array([[-self.L5/2, 0, -self.L4/2, 1]]).T,
         ]
 
         r_bar_6 = [
-            np.array([[0, 0, self.L5/2]]).T,
-            np.array([[0, 0, -self.L5/2]]).T,
+            np.array([[0, 0, self.L5/2, 1]]).T,
+            np.array([[0, 0, -self.L5/2, 1]]).T,
         ]
 
         r_bar_7 = [
-            np.array([[0, self.L5/2, self.L6/2]]).T,
-            np.array([[0, -self.L5/2, self.L6/2]]).T,
-            np.array([[self.L5/2, 0, self.L6/2]]).T,
-            np.array([[-self.L5/2, 0, self.L6/2]]).T,
+            np.array([[0, self.L5/2, self.L6/2, 1]]).T,
+            np.array([[0, -self.L5/2, self.L6/2, 1]]).T,
+            np.array([[self.L5/2, 0, self.L6/2, 1]]).T,
+            np.array([[-self.L5/2, 0, self.L6/2, 1]]).T,
         ]
 
         r_bar_GL = [
-            np.array([[0, 0, 0]]).T
+            np.array([[0, 0, 0, 1]]).T
         ]
 
         # 追加
@@ -148,10 +148,10 @@ class Maps(baxter_oldold.BaxterFuncs):
     #     return
 
 
-    def update_maps_q_to_oGL(self, g, dg):
+    def update_maps_q_to_oGL(self,):
         """q -> oGLのpsi, J, dJを更新"""
         
-        key = (0)  # 0にしとく
+        key = (-1)  # 0にしとく
         
         psi = self.T[-1][0:3, 3:4]
         J = self.Jo[-1]
@@ -174,36 +174,49 @@ class Maps(baxter_oldold.BaxterFuncs):
         return [psi, J, dJ]
     
     
+    def update_q_to_x(self,):
+        """q -> xのpsi, J, dJを更新"""
+        
+        for i, T in enumerate(self.T[2:]):  # 0, 1は固定
+            
+            Block_eye = np.concatenate([np.eye(3), np.zeros((3, 1))], axis = 1)
+            Block_J = np.concatenate(
+                [self.Jax[i], self.Jay[i], self.Jaz[i], self.Jo[i]],
+                axis=1
+            )  # ブロックヤコビ
+            Block_dJ = np.concatenate(
+                [self.dJax[i], self.dJay[i], self.dJaz[i], self.dJo[i]],
+                axis=1
+            )  # ブロック（微分）ヤコビ
+            
+            for j, r_bar in enumerate(self.r_bars[i]):
+                
+                key = (i, j)
+                
+                Block_r_bar = np.concatenate(
+                    [
+                        np.eye(7) * r_bar[0, 0],
+                        np.eye(7) * r_bar[1, 0],
+                        np.eye(7) * r_bar[2, 0],
+                        np.eye(7),
+                    ],
+                    axis = 0,
+                )
+                
+                psi = Block_eye @ T @ r_bar
+                J = Block_J @ Block_r_bar
+                dJ = Block_dJ @ Block_r_bar
+                
+                self.maps[key] = [psi, J, dJ]
+        
+        return
+    
+    
+    
     def update_x_to_dis_x_to_obs(self, o, do):
         """x -> dis_x_to_obsのpsi, J, dJを更新"""
         
         obs_num = len(o)
-        
-        for i, T in enumerate(self.T[2:]):  # 0, 1は固定
-            Jax = self.Jax[i]
-            Jay = self.Jay[i]
-            Jaz = self.Jaz[i]
-            Jo = self.Jo[i]
-            dJax = self.dJax[i]
-            dJay = self.dJay[i]
-            dJaz = self.dJaz[i]
-            dJo = self.dJo[i]
-            
-            Block_J = np.concatenate([Jax, Jay, Jaz, Jo], axis=1)  # ブロックヤコビ
-            
-            for j in range(1, ):
-                
-            
-                for k in range(obs_num):
-                    key = (j, k)
-                    
-                    
-        
-        
-        
-        return
-
-
 
     def update_all_maps(self, q, dq):
         """"psi, J, dJを全て更新"""
@@ -211,9 +224,11 @@ class Maps(baxter_oldold.BaxterFuncs):
         self.dq = dq
         self.q_list = np.ravel(q).tolist()
         self.dq_list = np.ravel(dq).tolist()
-
-        # for id in range(1):
-        #     self.maps[id] = ()
+        
+        self.update_all_baxter()
+        
+        self.update_maps_q_to_oGL()
+        self.update_q_to_x()
 
         return
 
@@ -234,6 +249,4 @@ if __name__ == '__main__':
 
     hoge = Maps()
     hoge.update_all_maps(q, dq)
-    hoge.update_all_baxter()
-    hoge.update_maps_q_to_x()
 
