@@ -2,6 +2,7 @@
 
 
 import numpy as np
+import time
 
 import baxter_oldold
 
@@ -225,14 +226,14 @@ class Maps(baxter_oldold.BaxterFuncs):
                     for k in range(self.obs_num_old):
                         key = (i, j, k)
                         del self.maps[key]
-            
-            for k, (o, do) in enumerate(zip(obs, dobs)):
-                key = (i, j, k)
                 
-                x, J_, dJ_ = self.maps[(i, j)]
-                dx = J_ @ self.q
-                
-                self.maps[key] = maps_of_distance(x, dx, o, do)
+                for k, (o, do) in enumerate(zip(obs, dobs)):
+                    key = (i, j, k)
+                    
+                    x, J_, dJ_ = self.maps[(i, j)]
+                    dx = J_ @ self.q
+                    
+                    self.maps[key] = maps_of_distance(x, dx, o, do)
         
         self.obs_num_old = len(obs)  # 1step前の障害物数の数
         return
@@ -278,9 +279,10 @@ if __name__ == '__main__':
         np.array([[2, 5, 10]]).T,
     ]
     
-
+    start = time.time()
     hoge = Maps()
-    hoge.update_all_maps(q, dq, o, do)
-    
-    print(hoge.maps)
+    for i in range(100):
+        hoge.update_all_maps(q, dq, o, do)
+    print('time=', time.time() - start)
+    #print(hoge.maps)
 
