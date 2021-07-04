@@ -58,8 +58,8 @@ class Maps(baxter_oldold.BaxterFuncs):
             self.dJo0, self.dJo1, self.dJo2, self.dJo3, self.dJo4,
             self.dJo5, self.dJo6, self.dJo7, self.dJo8, self.dJo9,
         ]
-
-
+        
+        self.obs_num_old = None
         self.maps = {}
 
 
@@ -159,19 +159,7 @@ class Maps(baxter_oldold.BaxterFuncs):
 
         self.maps[key] = [psi, J, dJ]
         return
-
-
-    def maps_of_distance(self, c_point, dc_point, obj, dobj,):
-        """c_point -> objectへの距離関数の汎用的な写像"""
-        
-        z = obj - c_point
-        dis_z = np.linalg.norm(z)
-        psi = dis_z
-        J = -1/dis_z * z.T
-        dz = dobj - J @ dc_point
-        dJ = 1/(dis_z**2) * z.T - 1/dis_z * (dobj - dz).T
-        
-        return [psi, J, dJ]
+    
     
     def update_q_to_x(self,):
         """q -> xのpsi, J, dJを更新"""
@@ -212,12 +200,46 @@ class Maps(baxter_oldold.BaxterFuncs):
     
     
     
-    def update_x_to_dis_x_to_obs(self, o, do):
+    def update_x_to_dis_x_to_obs(self, obs, dobs):
         """x -> dis_x_to_obsのpsi, J, dJを更新"""
         
-        obs_num = len(o)
-
-    def update_all_maps(self, q, dq):
+        def maps_of_distance(c_point, dc_point, obj, dobj,):
+            """c_point -> objectへの距離関数の汎用的な写像"""
+            
+            z = obj - c_point
+            dis_z = np.linalg.norm(z)
+            psi = dis_z
+            J = -1/dis_z * z.T
+            dz = dobj - J @ dc_point
+            dJ = 1/(dis_z**2) * z.T - 1/dis_z * (dobj - dz).T
+            
+            return [psi, J, dJ]
+        
+        
+        for i in range(7):
+            for j in range(len(self.r_bars[i])):
+                # 古いものを削除
+                if self.obs_num_old is None:
+                    pass
+                else:
+                    for k in range(self.obs_num_old):
+                        key = (i, j, k)
+                        del self.maps[key]
+            
+            for k, (o, do) in enumerate(zip(obs, dobs)):
+                key = (i, j, k)
+                
+                x, J_, dJ_ = self.maps[(i, j)]
+                dx = J_ @ self.q
+                
+                self.maps[key] = maps_of_distance(x, dx, o, do)
+        
+        self.obs_num_old = len(obs)  # 1step前の障害物数の数
+        return
+    
+    
+    
+    def update_all_maps(self, q, dq, obs, dobs):
         """"psi, J, dJを全て更新"""
         self.q = q
         self.dq = dq
@@ -228,7 +250,8 @@ class Maps(baxter_oldold.BaxterFuncs):
         
         self.update_maps_q_to_oGL()
         self.update_q_to_x()
-
+        self.update_x_to_dis_x_to_obs(obs, dobs)
+        
         return
 
 
@@ -245,8 +268,19 @@ if __name__ == '__main__':
 
     q = np.array([[1, 2, 3, 4, 5, 6, 7,]]).T
     dq = np.array([[1, 2, 3, 4, 5, 6, 7,]]).T
+    
+    o = [
+        np.array([[1, 1, 1]]).T,
+        np.array([[2, 5, 10]]).T,
+    ]
+    do = [
+        np.array([[1, 1, 1]]).T,
+        np.array([[2, 5, 10]]).T,
+    ]
+    
 
     hoge = Maps()
-    hoge.update_all_maps(q, dq)
-    print('hwhw')
+    hoge.update_all_maps(q, dq, o, do)
+    
+    print(hoge.maps)
 
