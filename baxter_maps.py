@@ -137,17 +137,6 @@ class Maps(baxter_oldold.BaxterFuncs):
         self.dJo = [f(self.q_list, self.dq_list) for f in self.func_dJo]
         return
 
-    # def update_maps_q_to_x(self,):
-    #     """q -> xのpsi, J, dJを更新"""
-    #     for i in range(7):
-    #         name = 'q_to_x' + str(i)
-    #         self.maps[name] = [
-    #             self.T[2+i][0:3, 3:4],
-    #             self.Jo[2+i],
-    #             self.dJo[2+i],
-    #         ]
-    #     return
-
 
     def update_maps_q_to_oGL(self,):
         """q -> oGLのpsi, J, dJを更新"""

@@ -50,7 +50,7 @@ class TargetAttractorFromOriginal(rmp_tree.RMPLeafBase):
         self, name, parent, parent_param,
         attract_max_speed, attract_gain, attract_a_damp_r,
         attract_sigma_W, attract_sigma_H, attract_A_damp_r,
-        psi, J, dJ,
+        psi=None, J=None, dJ=None, map_set=None,
     ):
         """"""
         
@@ -69,6 +69,7 @@ class TargetAttractorFromOriginal(rmp_tree.RMPLeafBase):
             psi = psi,
             J = J,
             dJ = dJ,
+            map_set = map_set,
             rmp = self.rmp,
         )
     
@@ -93,7 +94,7 @@ class CollisionAvoidanceFromOriginal(rmp_tree.RMPLeafBase):
     def __init__(
         self, name, parent, parent_param,
         obs_scale_rep, obs_scale_damp, obs_ratio, obs_rep_gain, obs_r,
-        psi, J, dJ,
+        psi=None, J=None, dJ=None, map_set=None,
     ):
         self.obs_scale_rep = obs_scale_rep
         self.obs_scale_damp = obs_scale_damp
@@ -107,6 +108,7 @@ class CollisionAvoidanceFromOriginal(rmp_tree.RMPLeafBase):
             psi = psi,
             J = J,
             dJ = dJ,
+            map_set = map_set,
             rmp = self.rmp,
         )
     

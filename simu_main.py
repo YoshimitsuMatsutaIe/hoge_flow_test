@@ -40,6 +40,7 @@ def simu():
     
     
     Maps = baxter_maps.Maps()
+    global maps
     maps = Maps.maps
     
     ### tree構築 ###
@@ -54,7 +55,7 @@ def simu():
         cpoint = rmp_tree.RMPNode(
             name = 'cpoint_' + str(i),
             parent = root,
-            psi = maps
+            map_set = maps[(1, 1, 1)]
         )
     
     

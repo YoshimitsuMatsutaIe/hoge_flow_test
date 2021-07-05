@@ -28,7 +28,7 @@ class RMPAlgebra:
 class RMPNode:
     """RMPtreeのnode（rootとleaf以外）"""
     
-    def __init__(self, name, parent, psi, J, dJ,):
+    def __init__(self, name, parent, psi=None, J=None, dJ=None, map_set=None):
         self.name = name
         self.parent = parent
         self.children = []
@@ -37,9 +37,14 @@ class RMPNode:
         if self.parent:
             self.parent.add_child(self)
         
-        self.psi = psi
-        self.J = J
-        self.dJ = dJ
+        if map_set:
+            self.psi = map_set[0]
+            self.J = map_set[1]
+            self.dJ = map_set[2]
+        else:
+            self.psi = psi
+            self.J = J
+            self.dJ = dJ
         
         self.x = None
         self.dx = None
@@ -103,7 +108,7 @@ class RMPRoot(RMPNode):
     
     def __init__(self, name):
         RMPNode.__init__(
-            self, name=name, parent=None, psi=None, J=None, dJ=None
+            self, name=name, parent=None, psi=None, J=None, dJ=None, map_set=None,
         )
         return
     
@@ -136,9 +141,9 @@ class RMPRoot(RMPNode):
 class RMPLeafBase(RMPNode):
     """leafノードのベース"""
     
-    def __init__(self, name, parent, parent_param, psi, J, dJ, rmp):
+    def __init__(self, name, parent, parent_param, rmp, psi=None, J=None, dJ=None, map_set=None,):
         RMPNode.__init__(
-            self, name=name, parent=parent, psi=psi,J=J, dJ=dJ
+            self, name=name, parent=parent, psi=psi, J=J, dJ=dJ, map_set=map_set,
         )
         self.rmp = rmp
         self.parent_param = parent_param
