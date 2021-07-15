@@ -37,9 +37,11 @@ def simu():
     #print(state_init)
     
     goal = np.array([[0, 0, 0]]).T
-    
+    obs = [np.array([[10, 1, 0]]).T]
+    dobs = [np.array([[0, 0, 0]]).T]
     
     Maps = baxter_maps.Maps()
+    Maps.update_all_maps(q, dq, obs, dobs)
     global maps
     maps = Maps.maps
     
@@ -48,17 +50,20 @@ def simu():
     root = rmp_tree.RMPRoot(name='root')
     
     # control points
-    cpoint_num = sum([len(r) for r in maps.r_bars])
+    cpoint_num = sum([len(r) for r in Maps.r_bars])
     
     cpoints = []
-    for i in range(cpoint_num):
-        cpoint = rmp_tree.RMPNode(
-            name = 'cpoint_' + str(i),
-            parent = root,
-            map_set = maps[(1, 1, 1)]
-        )
+    for i in range(7):
+        for j in range(len(Maps.r_bars[i])):
+            cpoint = rmp_tree.RMPNode(
+                name = 'cpoint_' + str(i),
+                parent = root,
+                map_set = maps[(i, j)]
+            )
+            cpoints.append(cpoint)
     
     
+    print("tree構築成功")
     
     
     ### シミュレーション実行 ###
