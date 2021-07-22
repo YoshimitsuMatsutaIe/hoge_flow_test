@@ -42,7 +42,18 @@ def simu():
     
     Maps = baxter_maps.Maps()
     Maps.update_all_maps(q, dq, obs, dobs)
-    global maps
+    
+    
+    def dynamics(t, state):
+        state = state.reshape((2, 1))
+        q = state[0]
+        dq = state[1]
+        
+        
+        ddq = root.solve(x=q, dx=dq)
+        
+        return np.concatenate((dq, ddq), axis = None)
+    
     maps = Maps.maps
     
     ### tree構築 ###
@@ -67,15 +78,6 @@ def simu():
     
     
     ### シミュレーション実行 ###
-    def dynamics(t, state):
-        state = state.reshape((2, 1))
-        q = state[0]
-        dq = state[1]
-        
-        ddq = root.solve(x=q, dx=dq)
-        
-        return np.concatenate((dq, ddq), axis = None)
-    
     TIME_SPAN = 5.00
     TIME_INTERVAL = 0.01
     t = np.arange(0, TIME_SPAN, TIME_INTERVAL)
