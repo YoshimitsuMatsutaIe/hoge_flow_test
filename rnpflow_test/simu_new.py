@@ -6,7 +6,7 @@ import numpy as np
 from scipy.integrate import solve_ivp
 from math import cos, sin, tan, pi
 #import itertools
-import csv
+#import csv
 import matplotlib.pyplot as plt
 import matplotlib.animation as anm
 from mpl_toolkits.mplot3d import Axes3D 
@@ -18,6 +18,39 @@ import rmp_tree
 import rmp_leaf
 import baxter_oldold
 import baxter_maps
+
+
+class Node:
+    def __init__(self, parent, x=None, dx=None):
+        self.parent = parent
+        self.children = []
+        self.x = x
+        self.dx = dx
+        self.f = None
+        self.M = None
+        return
+    
+    def add_child(self, child):
+        self.children.append(child)
+        return
+    
+    def push(self, psi, J, dJ):
+        self.psi = psi
+        self.J = J
+        self.dJ = dJ
+        self.x = psi
+        self.dx = J @ self.parent.dx
+        return
+    
+    def pull(self):
+        pulled_childs_f, pulled_childs_M = []
+        for child in self.children:
+            pulled_childs_f.append(child.J.T @ (child.f - child.M @ child.dJ @ child.dx))
+            pulled_childs_M.append(child.J.T @ child.M @ child.J)
+        self.f += np.sum(pulled_childs_f)
+        self.M += np.sum(pulled_childs_M)
+        return
+
 
 def simu():
     """シミュレーション"""
@@ -42,12 +75,42 @@ def simu():
     
     Maps = baxter_maps.Maps()
     Maps.update_all_maps(q, dq, obs, dobs)
+    maps = Maps.maps
     
+    ### tree構築 ###
+    root = Node(parnet=None, x=q, dx=dq)
+    
+    x_gl_node = Node(
+        parent = root,
+        x = maps[(-1)][0],
+        dx = maps[(-1)]
+    )
+    x_gl_node.parent.add_child(x_gl_node)
+    x_gl_node.x = maps[(-1)][0]
+    x_gl_node.dx = 
+    
+    for i in range(len(Maps.r_bars)):
+        for j in range(len(Maps.r_bars[i])):
+            x_node = Node(parent=root)
+            root.add_child(x_node)
+            for k in range(len(obs)):
+                d_node = Node(parent=x_node)
+                x_node.add_child(d_node)
     
     def dynamics(t, state):
         state = state.reshape((2, 1))
         q = state[0]
         dq = state[1]
+        
+        Maps.update_all_maps(q, dq, obs, dobs)  # 写像を更新
+        
+        ### push ###
+        for i in range(len(Maps.r_bars)):
+            for j in range(len(Maps.r_bars[i])):
+                x_
+                for k in range(len(obs)):
+        
+        
         
         
         ddq = root.solve(x=q, dx=dq)
